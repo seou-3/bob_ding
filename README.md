@@ -76,7 +76,7 @@ This game contains mature psychological content and may not be suitable for all 
 # 1. Download bob_ding_fixed.py from this repository
 # 2. Place it in a dedicated folder
 # 3. Open terminal in that folder
-python bob_ding_fixed.py
+python main.py
 ```
 
 </details>
@@ -87,7 +87,7 @@ python bob_ding_fixed.py
 ```bash
 git clone [repository-url]
 cd bob-ding
-python bob_ding_fixed.py
+python main.py
 ```
 
 </details>
@@ -106,7 +106,7 @@ bob_env\Scripts\activate
 source bob_env/bin/activate
 
 # Run game
-python bob_ding_fixed.py
+python main.py
 ```
 
 </details>
@@ -115,7 +115,7 @@ python bob_ding_fixed.py
 
 ```bash
 python --version          # Should be 3.6+
-python bob_ding_fixed.py  # Should display "I am Bob Ding."
+python main.py  # Should display "I am Bob Ding."
 ```
 
 ---
