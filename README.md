@@ -181,6 +181,7 @@ Secrets can be used up to **3 times** with diminishing returns:
 | 💀 **Hardcore** | No secrets work. No mercy. Pure suffering path |
 | 📉 **Ascension** | Start at 50% corruption. Accelerated deterioration |
 | 🕊️ **Mercy** | Bob provides more help. Slower corruption. Easier secrets |
+| ☠️ **Ironman** |   Permadeath. No resets. One chance only |
 
 ---
 
