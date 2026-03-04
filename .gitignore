@@ -18,6 +18,7 @@ bob_ding.save.backup
 # Test artifacts
 test_input.txt
 test_output.txt
+*.test.txt
 replay_*.txt
 input_log_*.txt
 
