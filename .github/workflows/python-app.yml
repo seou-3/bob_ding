@@ -27,30 +27,39 @@ jobs:
         run: python --version
 
       - name: Run core smoke tests
+        timeout-minutes: 2
         run: python3 test.py
 
       - name: Run comprehensive feature tests
+        timeout-minutes: 2
         run: python3 test_features.py
 
       - name: Run command system tests
+        timeout-minutes: 2
         run: python3 test_commands.py
 
       - name: Run game mode tests
+        timeout-minutes: 2
         run: python3 test_game_modes.py
 
       - name: Run relationship system tests
+        timeout-minutes: 2
         run: python3 test_relationships.py
 
       - name: Run horror mechanics tests
+        timeout-minutes: 2
         run: python3 test_horror_systems.py
 
       - name: Run ending tests
+        timeout-minutes: 5
         run: python3 test_endings.py
 
       - name: Display secrets catalog
+        timeout-minutes: 2
         run: python3 test_secrets.py
 
       - name: Test main.py imports
+        timeout-minutes: 1
         run: python3 -c "import main; print('✓ main.py imports successfully')"
 
   validate:

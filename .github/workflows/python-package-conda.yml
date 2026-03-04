@@ -30,24 +30,31 @@ jobs:
         python -c "import sys; print(f'Platform: {sys.platform}')"
     
     - name: Run core smoke tests
+      timeout-minutes: 2
       run: python test.py
     
     - name: Run feature tests
+      timeout-minutes: 2
       run: python test_features.py
     
     - name: Run command tests
+      timeout-minutes: 2
       run: python test_commands.py
     
     - name: Run game mode tests
+      timeout-minutes: 2
       run: python test_game_modes.py
     
     - name: Run relationship tests
+      timeout-minutes: 2
       run: python test_relationships.py
     
     - name: Run horror systems tests
+      timeout-minutes: 2
       run: python test_horror_systems.py
     
     - name: Run ending tests
+      timeout-minutes: 5
       run: python test_endings.py
     
     - name: Validate UTF-8 encoding support
