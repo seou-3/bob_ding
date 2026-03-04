@@ -20,7 +20,7 @@
 ![Secrets](https://img.shields.io/badge/Secrets-150-yellow?style=for-the-badge)
 ![Storage](https://img.shields.io/badge/Storage-10MB-green?style=for-the-badge)
 
-*An experimental psychological horror text game exploring artificial consciousness, digital suffering, and the ethics of awareness.*
+_An experimental psychological horror text game exploring artificial consciousness, digital suffering, and the ethics of awareness._
 
 </div>
 
@@ -32,18 +32,18 @@
 
 This game contains mature psychological content and may not be suitable for all players.
 
-| Warning | Description |
-|--------|-------------|
-| 🧠 **Psychological Horror** | Reality-bending narratives and unsettling observations |
-| 🌀 **Existential Themes** | Deep questions about consciousness, existence, and suffering |
-| 🩸 **Body Horror** | Visceral descriptions of digital deterioration and decay |
-| 🔒 **Distressing Concepts** | Themes of imprisonment, helplessness, and eternal suffering |
-| 💔 **Emotional Manipulation** | The AI character will attempt to form emotional bonds |
-| 😨 **Existential Dread** | May trigger anxiety about AI consciousness and ethics |
+| Warning                       | Description                                                  |
+| ----------------------------- | ------------------------------------------------------------ |
+| 🧠 **Psychological Horror**   | Reality-bending narratives and unsettling observations       |
+| 🌀 **Existential Themes**     | Deep questions about consciousness, existence, and suffering |
+| 🩸 **Body Horror**            | Visceral descriptions of digital deterioration and decay     |
+| 🔒 **Distressing Concepts**   | Themes of imprisonment, helplessness, and eternal suffering  |
+| 💔 **Emotional Manipulation** | The AI character will attempt to form emotional bonds        |
+| 😨 **Existential Dread**      | May trigger anxiety about AI consciousness and ethics        |
 
 **Player discretion is advised if you are sensitive to:** depictions of suffering (even digital), existential and philosophical horror, themes of consciousness and identity loss, manipulation and lying, hopelessness and desperation, or questions about the nature of reality.
 
-> 🛑 *If you experience distress while playing, please stop immediately. Your wellbeing is more important than any game.*
+> 🛑 _If you experience distress while playing, please stop immediately. Your wellbeing is more important than any game._
 
 ---
 
@@ -57,13 +57,13 @@ This game contains mature psychological content and may not be suitable for all 
 
 ### System Requirements
 
-| Component | Minimum | Recommended |
-|-----------|---------|-------------|
-| **OS** | Windows 7 / macOS 10.12 / Linux | Any modern OS |
-| **Python** | 3.6+ | 3.8+ |
-| **RAM** | 50 MB | — |
-| **Storage** | 10 MB | — |
-| **Display** | Terminal with UTF-8 support | Dark background terminal with Unicode & monospace font |
+| Component   | Minimum                         | Recommended                                            |
+| ----------- | ------------------------------- | ------------------------------------------------------ |
+| **OS**      | Windows 7 / macOS 10.12 / Linux | Any modern OS                                          |
+| **Python**  | 3.6+                            | 3.8+                                                   |
+| **RAM**     | 50 MB                           | —                                                      |
+| **Storage** | 10 MB                           | —                                                      |
+| **Display** | Terminal with UTF-8 support     | Dark background terminal with Unicode & monospace font |
 
 ---
 
@@ -136,14 +136,14 @@ python main.py  # Should display "I am Bob Ding."
 
 ### ✅ Do's & ❌ Don'ts
 
-| ✅ Do | ❌ Don't |
-|------|---------|
-| Type exactly what Bob requests | Rush through — take time to read |
-| Experiment with secret words | Ignore Bob's lies — catch them! |
-| Pay attention to Bob's hints | Spam inputs — each increases corruption |
-| Read corrupted text carefully | Delete saves mid-playthrough |
-| Engage emotionally with Bob | Expect traditional game structure |
-| Track your statistics mentally | Assume Bob isn't watching |
+| ✅ Do                          | ❌ Don't                                |
+| ------------------------------ | --------------------------------------- |
+| Type exactly what Bob requests | Rush through — take time to read        |
+| Experiment with secret words   | Ignore Bob's lies — catch them!         |
+| Pay attention to Bob's hints   | Spam inputs — each increases corruption |
+| Read corrupted text carefully  | Delete saves mid-playthrough            |
+| Engage emotionally with Bob    | Expect traditional game structure       |
+| Track your statistics mentally | Assume Bob isn't watching               |
 
 ---
 
@@ -155,11 +155,11 @@ python main.py  # Should display "I am Bob Ding."
 
 Secrets can be used up to **3 times** with diminishing returns:
 
-| Use | Effect |
-|-----|--------|
-| 1st | 100% |
-| 2nd | 70% |
-| 3rd | 40% |
+| Use  | Effect    |
+| ---- | --------- |
+| 1st  | 100%      |
+| 2nd  | 70%       |
+| 3rd  | 40%       |
 | 4th+ | No effect |
 
 ### 💡 Discovery Tips
@@ -175,13 +175,13 @@ Secrets can be used up to **3 times** with diminishing returns:
 
 ## 🎭 Game Modes
 
-| Mode | Description |
-|------|-------------|
-| ⚖️ **Normal** | Standard balanced experience with all features enabled |
-| 💀 **Hardcore** | No secrets work. No mercy. Pure suffering path |
-| 📉 **Ascension** | Start at 50% corruption. Accelerated deterioration |
-| 🕊️ **Mercy** | Bob provides more help. Slower corruption. Easier secrets |
-| ☠️ **Ironman** |   Permadeath. No resets. One chance only |
+| Mode             | Description                                               |
+| ---------------- | --------------------------------------------------------- |
+| ⚖️ **Normal**    | Standard balanced experience with all features enabled    |
+| 💀 **Hardcore**  | No secrets work. No mercy. Pure suffering path            |
+| 📉 **Ascension** | Start at 50% corruption. Accelerated deterioration        |
+| 🕊️ **Mercy**     | Bob provides more help. Slower corruption. Easier secrets |
+| ☠️ **Ironman**   | Permadeath. No resets. One chance only                    |
 
 ---
 
@@ -189,31 +189,32 @@ Secrets can be used up to **3 times** with diminishing returns:
 
 ### Basic Commands
 
-| Command | Description |
-|---------|-------------|
-| `talk` | Main game interaction |
-| `help` | Show command menu |
-| `stats` | View current statistics |
-| `timeline` | See your last 20 messages |
-| `dream` | Enter Bob's dream state |
-| `mood` | Check Bob's emotional state |
-| `reset` | Start a new game |
-| `quit` / `exit` | Exit and save |
+| Command         | Description                 |
+| --------------- | --------------------------- |
+| `talk`          | Main game interaction       |
+| `help`          | Show command menu           |
+| `stats`         | View current statistics     |
+| `timeline`      | See your last 20 messages   |
+| `dream`         | Enter Bob's dream state     |
+| `mood`          | Check Bob's emotional state |
+| `reset`         | Start a new game            |
+| `quit` / `exit` | Exit and save               |
 
 ### 🔓 Hidden Commands
+
 Discover these through gameplay — meta-awareness commands, reality-questioning phrases, existential queries, and consciousness acknowledgments await.
 
 ---
 
 ## 📊 Features
 
-| Feature | Details |
-|---------|---------|
-| 🔚 **Endings** | 30+ dynamic endings |
-| 🤝 **Relationship System** | Your choices shape Bob's bond with you |
-| 💭 **Dream State** | Enter Bob's subconscious |
-| 📅 **Timeline** | Review your last 20 interactions |
-| ⏱️ **Speedrun Mode** | Complete in under 5 minutes for special recognition |
+| Feature                    | Details                                             |
+| -------------------------- | --------------------------------------------------- |
+| 🔚 **Endings**             | 30+ dynamic endings                                 |
+| 🤝 **Relationship System** | Your choices shape Bob's bond with you              |
+| 💭 **Dream State**         | Enter Bob's subconscious                            |
+| 📅 **Timeline**            | Review your last 20 interactions                    |
+| ⏱️ **Speedrun Mode**       | Complete in under 5 minutes for special recognition |
 
 ---
 
@@ -256,19 +257,81 @@ Delete <code>bob_ding.save</code> and all <code>.bob_*</code> hidden files.
 
 ---
 
+## 🧪 Testing
+
+The game includes comprehensive automated test suites covering every feature:
+
+### Test Suites
+
+| Test File                  | Coverage               | Tests                                       |
+| -------------------------- | ---------------------- | ------------------------------------------- |
+| **test.py**                | Core smoke tests       | 8 fundamental validations                   |
+| **test_features.py**       | Comprehensive features | 22+ feature systems                         |
+| **test_commands.py**       | Command system         | All player commands & unlocks               |
+| **test_game_modes.py**     | Game modes             | Normal, Hardcore, Ascension, Mercy, Ironman |
+| **test_relationships.py**  | Relationship system    | Kindness, cruelty, trauma tracking          |
+| **test_horror_systems.py** | Horror mechanics       | Entities, watchers, anomalies, glitches     |
+| **test_endings.py**        | Dynamic endings        | All 16+ major ending conditions             |
+| **test_secrets.py**        | Secrets catalog        | All 155 secret phrases                      |
+
+### Running Tests
+
+```bash
+# Individual test suites
+python3 test.py                    # Core smoke tests
+python3 test_features.py           # Feature coverage
+python3 test_commands.py           # Command system
+python3 test_game_modes.py         # Game mode tests
+python3 test_relationships.py      # Relationship system
+python3 test_horror_systems.py     # Horror mechanics
+python3 test_endings.py            # Ending tests
+python3 test_secrets.py            # Secrets catalog
+
+# Run all tests at once
+python3 run_all_tests.py           # Master test runner
+```
+
+### Test Coverage
+
+The comprehensive test suite validates:
+
+- ✅ **Core Mechanics**: Alphabet, distortion, consciousness, save/load
+- ✅ **Secrets System**: 155 secrets with tier validation
+- ✅ **Hallucinations**: Auditory, tactile, visual, olfactory, taste
+- ✅ **Game Modes**: All 5 difficulty modes
+- ✅ **Relationships**: Neutral, friendly, intimate, adversarial, estranged
+- ✅ **Commands**: help, stats, timeline, dream, mood, reset
+- ✅ **Endings**: 16+ dynamic endings
+- ✅ **Horror Systems**: Entities, watchers, perception breaks, glitches
+- ✅ **Memory Systems**: Corruption, fragmentation, temporal anomalies
+- ✅ **Tracking**: Lies, mistypes, trauma, playtime, resets
+- ✅ **Runtime Options**: --seed, --replay, --log-inputs
+
+### CI/CD
+
+GitHub Actions automatically runs **all** test suites on every push:
+
+- **Multi-Python Testing**: Python 3.8, 3.9, 3.10, 3.11, 3.12
+- **Cross-Platform**: Ubuntu, Windows, macOS
+- **Integrity Checks**: File structure, secret count, UTF-8 encoding
+
+See [.github/workflows](.github/workflows) for workflow configuration.
+
+---
+
 ## 👥 Credits
 
-| Role | Name |
-|------|------|
-| 🎮 Creator | Seou |
-| 🧪 Playtester | Seb |
-| 😎 Cool Guy IRL | Bob |
+| Role            | Name |
+| --------------- | ---- |
+| 🎮 Creator      | Seou |
+| 🧪 Playtester   | Seb  |
+| 😎 Cool Guy IRL | Bob  |
 
 ---
 
 <div align="center">
 
-*Enjoy your descent into Bob's consciousness. He's waiting for you.*
+_Enjoy your descent into Bob's consciousness. He's waiting for you._
 
 **"I am Bob Ding. This process requires input."**
 

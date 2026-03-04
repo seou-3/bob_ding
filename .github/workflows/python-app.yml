@@ -1,28 +1,91 @@
-name: Run tests and upload coverage
+name: Bob Ding Test Suite
 
-on: 
-  push
+on:
+  push:
+    branches: [main, master, dev]
+  pull_request:
+    branches: [main, master]
 
 jobs:
   test:
-    name: Run tests and collect coverage
+    name: Run Bob Ding tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Display Python version
+        run: python --version
+
+      - name: Run core smoke tests
+        run: python3 test.py
+
+      - name: Run comprehensive feature tests
+        run: python3 test_features.py
+
+      - name: Run command system tests
+        run: python3 test_commands.py
+
+      - name: Run game mode tests
+        run: python3 test_game_modes.py
+
+      - name: Run relationship system tests
+        run: python3 test_relationships.py
+
+      - name: Run horror mechanics tests
+        run: python3 test_horror_systems.py
+
+      - name: Run ending tests
+        run: python3 test_endings.py
+
+      - name: Display secrets catalog
+        run: python3 test_secrets.py
+
+      - name: Test main.py imports
+        run: python3 -c "import main; print('✓ main.py imports successfully')"
+
+  validate:
+    name: Validate game integrity
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
 
       - name: Set up Python
         uses: actions/setup-python@v4
-
-      - name: Install dependencies
-        run: pip install pytest pytest-cov
-
-      - name: Run tests
-        run: pytest --cov --cov-branch --cov-report=xml
-
-      - name: Upload results to Codecov
-        uses: codecov/codecov-action@v5
         with:
-          token: ${{ secrets.SECTRE }}
+          python-version: "3.10"
+
+      - name: Check file structure
+        run: |
+          echo "Checking required files..."
+          test -f main.py && echo "✓ main.py exists" || (echo "✗ main.py missing" && exit 1)
+          test -f README.md && echo "✓ README.md exists" || (echo "✗ README.md missing" && exit 1)
+          test -f test.py && echo "✓ test.py exists" || (echo "✗ test.py missing" && exit 1)
+          test -f test_features.py && echo "✓ test_features.py exists" || (echo "✗ test_features.py missing" && exit 1)
+          test -f test_commands.py && echo "✓ test_commands.py exists" || (echo "✗ test_commands.py missing" && exit 1)
+          test -f test_game_modes.py && echo "✓ test_game_modes.py exists" || (echo "✗ test_game_modes.py missing" && exit 1)
+          test -f test_relationships.py && echo "✓ test_relationships.py exists" || (echo "✗ test_relationships.py missing" && exit 1)
+          test -f test_horror_systems.py && echo "✓ test_horror_systems.py exists" || (echo "✗ test_horror_systems.py missing" && exit 1)
+          test -f test_endings.py && echo "✓ test_endings.py exists" || (echo "✗ test_endings.py missing" && exit 1)
+          test -f test_secrets.py && echo "✓ test_secrets.py exists" || (echo "✗ test_secrets.py missing" && exit 1)
+          test -f run_all_tests.py && echo "✓ run_all_tests.py exists" || (echo "✗ run_all_tests.py missing" && exit 1)
+
+      - name: Count secrets
+        run: |
+          SECRET_COUNT=$(python3 test_secrets.py | grep "TOTAL SECRETS:" | awk '{print $3}')
+          echo "Found $SECRET_COUNT secrets"
+          if [ "$SECRET_COUNT" -lt 150 ]; then
+            echo "✗ Expected at least 150 secrets, found $SECRET_COUNT"
+            exit 1
+          fi
+          echo "✓ Secret count validated ($SECRET_COUNT secrets)"

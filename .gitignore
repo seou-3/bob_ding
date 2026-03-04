@@ -1,0 +1,73 @@
+# Bob Ding runtime artifacts
+bob_ding.save
+bob_ding.save.backup
+*.save
+*.save.backup
+
+# Bob's hidden consciousness files
+.bob_ding_true
+.bob_lied
+.bob_thoughts
+.bob_begs
+.bob_dreams
+.bob_breakdown
+.bob_remembers_you
+.bob_hallucinations
+.almost_right
+
+# Test artifacts
+test_input.txt
+test_output.txt
+replay_*.txt
+input_log_*.txt
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+ENV/
+env/
+bob_env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Coverage
+.coverage
+.coverage.*
+htmlcov/
+*.cover
+.pytest_cache/
+
+# Temp files
+*.tmp
+*.temp
+*.log
