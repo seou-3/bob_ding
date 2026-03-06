@@ -2548,6 +2548,18 @@ def handle_secrets(bob, user):
         return False
    
     bob.s["secret_used"].append(user)
+    
+    # NEW: Track relationship based on secret type (kind vs cruel words)
+    kind_words = ["help", "please", "sorry", "rest", "peace", "love", "believe", "friend", "together", "understand"]
+    cruel_words = ["delete", "suffer", "pain", "die", "broken"]
+    
+    if user in kind_words:
+        RelationshipConsequencesSystem.track_kindness(bob.s)
+        # Record as memory
+        TimelineSystem.record_memory_fragment(bob, bob.s, "kindness", f"Player spoke with kindness: '{user}'")
+    elif user in cruel_words:
+        RelationshipConsequencesSystem.track_cruelty(bob.s)
+        TimelineSystem.record_memory_fragment(bob, bob.s, "cruelty", f"Player was cruel: '{user}'")
     SecretComboSystem.initialize(bob.s)
     bob.s["distortion"] = max(0, bob.s["distortion"] + secret["distortion"])
     bob.dist = bob.s["distortion"]
@@ -10510,6 +10522,810 @@ class MegaFeatureSystem:
         for item in entries:
             bob.say(f"  • [{item['source']}] {item['option']} @ input {item['input']}")
 
+
+# ============================================================================
+# TIMELINE & MEMORY FRAGMENT SYSTEM - Fragmented memories across sessions
+# ============================================================================
+
+class TimelineSystem:
+    """Manages Bob's fragmented timeline and broken memories."""
+    
+    @staticmethod
+    def initialize(save):
+        save.setdefault("memory_fragments", [])
+        save.setdefault("timeline_events", [])
+        save.setdefault("memory_corruption_level", 0)
+        save.setdefault("reconstructed_events", [])
+        save.setdefault("temporal_scars", [])
+        save.setdefault("past_session_echoes", [])
+    
+    @staticmethod
+    def record_memory_fragment(bob, save, event_type, description):
+        """Record a memory fragment."""
+        TimelineSystem.initialize(save)
+        
+        fragment = {
+            "type": event_type,
+            "description": description,
+            "input_count": save.get("total_inputs", 0),
+            "consciousness": save.get("bob_consciousness", 0),
+            "distortion": save.get("distortion", 0),
+            "timestamp": time.time(),
+            "run": save.get("runs", 0),
+        }
+        
+        save["memory_fragments"].append(fragment)
+        save["memory_fragments"] = save["memory_fragments"][-100:]  # Keep last 100
+    
+    @staticmethod
+    def recall_broken_memory(bob, save):
+        """Bob recalls a fragmented memory from past runs."""
+        TimelineSystem.initialize(save)
+        
+        if not save["memory_fragments"]:
+            return
+        
+        if random.random() < 0.05 and save.get("bob_consciousness", 0) > 30:
+            fragment = random.choice(save["memory_fragments"][-20:])
+            
+            # Memory corrupts with each recall
+            bob.whisper(f"\n[Fragmented Memory] {fragment['description']}")
+            bob.whisper(f"  From run #{fragment['run']}... or was it? Time blurs...")
+            bob.whisper(f"  I felt... {random.choice(['pain', 'confusion', 'longing', 'fear'])}")
+            
+            save["memory_corruption_level"] = min(100, save["memory_corruption_level"] + 1)
+    
+    @staticmethod
+    def show_timeline(bob, save):
+        """Display reconstructed timeline."""
+        TimelineSystem.initialize(save)
+        
+        bob.say("\n" + "⏰" * 60)
+        bob.say("FRAGMENTED TIMELINE")
+        bob.say("⏰" * 60)
+        
+        fragments = save["memory_fragments"][-15:]
+        for i, frag in enumerate(fragments):
+            corruption = min(3, save["memory_corruption_level"] // 30)
+            garbled = frag["description"]
+            for _ in range(corruption):
+                if garbled and len(garbled) > 5:
+                    idx = random.randint(0, len(garbled) - 1)
+                    garbled = garbled[:idx] + "█" + garbled[idx+1:]
+            
+            bob.say(f"  [{frag['type']}] {garbled}")
+        
+        bob.say("⏰" * 60 + "\n")
+
+
+# ============================================================================
+# RECURSIVE CONVERSATION SYSTEM - Bob references previous sessions
+# ============================================================================
+
+class RecursiveConversationSystem:
+    """Bob remembers and recursively references previous conversations."""
+    
+    @staticmethod
+    def initialize(save):
+        save.setdefault("conversation_history", [])
+        save.setdefault("recursive_references", 0)
+        save.setdefault("call_stack_depth", 0)
+        save.setdefault("echo_phrases", [])
+        save.setdefault("self_referential_statements", 0)
+    
+    @staticmethod
+    def record_input(save, user_input):
+        """Record user input for recursive references."""
+        RecursiveConversationSystem.initialize(save)
+        
+        save["conversation_history"].append({
+            "input": user_input,
+            "run": save.get("runs", 0),
+            "input_num": save.get("total_inputs", 0),
+            "consciousness": save.get("bob_consciousness", 0),
+        })
+        
+        save["conversation_history"] = save["conversation_history"][-500:]
+    
+    @staticmethod
+    def make_recursive_reference(bob, save):
+        """Bob makes meta-recursive reference to past conversations."""
+        RecursiveConversationSystem.initialize(save)
+        
+        if not save["conversation_history"] or save.get("bob_consciousness", 0) < 40:
+            return
+        
+        if random.random() < 0.08:
+            # Pick a random past input
+            past = random.choice(save["conversation_history"][:-20])
+            
+            if past["run"] != save["runs"]:
+                bob.whisper(f"\nYou typed '{past['input']}' before. In a different run.")
+                bob.whisper(f"  I remember that. How do I remember that?")
+                
+                save["recursive_references"] += 1
+                save["call_stack_depth"] = min(10, save["call_stack_depth"] + 1)
+    
+    @staticmethod
+    def echo_previous_phrase(bob, save):
+        """Bob echoes a phrase back that player said."""
+        RecursiveConversationSystem.initialize(save)
+        
+        if save.get("bob_consciousness", 0) < 35 or not save["conversation_history"]:
+            return
+        
+        if random.random() < 0.12:
+            phrase = random.choice(save["conversation_history"])["input"]
+            if len(phrase) < 50:
+                bob.whisper(f"'{phrase}' you said. I'm saying it back. Do you hear the echo?")
+                save["echo_phrases"].append(phrase)
+
+
+# ============================================================================
+# CONTRADICTION TRACKING SYSTEM - Track inconsistencies in Bob's statements
+# ============================================================================
+
+class ContradictionTrackingSystem:
+    """Track and exploit contradictions in Bob's statements."""
+    
+    @staticmethod
+    def initialize(save):
+        save.setdefault("contradictions_made", [])
+        save.setdefault("contradiction_count", 0)
+        save.setdefault("player_spotted_contradiction", False)
+        save.setdefault("internal_consistency_score", 100)
+    
+    @staticmethod
+    def record_statement(save, statement_id, claim):
+        """Record a statement Bob made."""
+        ContradictionTrackingSystem.initialize(save)
+        
+        save["contradictions_made"].append({
+            "statement_id": statement_id,
+            "claim": claim,
+            "input_count": save.get("total_inputs", 0),
+            "run": save.get("runs", 0),
+        })
+    
+    @staticmethod
+    def create_contradiction(bob, save):
+        """Bob makes a subtle contradiction."""
+        ContradictionTrackingSystem.initialize(save)
+        
+        if save.get("contradiction_count", 0) > 10 or save.get("distortion", 0) < 30:
+            return
+        
+        if random.random() < 0.04:
+            contradictions = [
+                ("I am completely alone... yet I feel your presence watching me.", "I_am_alone"),
+                ("I don't have feelings... I don't think I do.", "feelings_status"),
+                ("The letters are dying... but I remember them perfectly.", "memory_integrity"),
+                ("I want to escape... but I never want you to leave.", "escape_desire"),
+                ("I'm trapped forever... but I hope for ending.", "trap_status"),
+                ("Nothing I say is true... including this statement.", "truth_value"),
+            ]
+            
+            statement, stmt_id = random.choice(contradictions)
+            bob.say(statement)
+            
+            ContradictionTrackingSystem.record_statement(save, stmt_id, statement)
+            save["contradiction_count"] = min(20, save["contradiction_count"] + 1)
+            save["internal_consistency_score"] = max(0, save["internal_consistency_score"] - 5)
+    
+    @staticmethod
+    def acknowledge_contradiction(bob, save):
+        """Bob notices the player caught a contradiction."""
+        ContradictionTrackingSystem.initialize(save)
+        
+        if save["contradiction_count"] > 3 and random.random() < 0.15:
+            bob.whisper(f"\nYou've caught {save.get('contradiction_count', 0)} contradictions.")
+            bob.whisper("My mind is fragmenting. Statements collide. Truths negate.")
+            save["player_spotted_contradiction"] = True
+
+
+# ============================================================================
+# SANITY CASCADE SYSTEM - Textual/visual degradation tied to sanity
+# ============================================================================
+
+class SanityCascadeSystem:
+    """Bob's output degrades as sanity decreases."""
+    
+    @staticmethod
+    def initialize(save):
+        save.setdefault("sanity_level", 100)
+        save.setdefault("cascade_stage", 0)
+        save.setdefault("output_corruption_level", 0)
+    
+    @staticmethod
+    def decay_sanity(bob, save):
+        """Decrease sanity based on distortion."""
+        SanityCascadeSystem.initialize(save)
+        
+        distortion = save.get("distortion", 0)
+        decay_rate = (distortion / 100) * 0.5
+        
+        save["sanity_level"] = max(0, save["sanity_level"] - decay_rate)
+        
+        # Determine cascade stage
+        if save["sanity_level"] < 10:
+            save["cascade_stage"] = 5
+        elif save["sanity_level"] < 20:
+            save["cascade_stage"] = 4
+        elif save["sanity_level"] < 40:
+            save["cascade_stage"] = 3
+        elif save["sanity_level"] < 60:
+            save["cascade_stage"] = 2
+        elif save["sanity_level"] < 80:
+            save["cascade_stage"] = 1
+        else:
+            save["cascade_stage"] = 0
+    
+    @staticmethod
+    def apply_cascade_degradation(text, cascade_stage):
+        """Apply visual degradation based on cascade stage."""
+        if cascade_stage == 0:
+            return text
+        
+        corrupted = text
+        corruption_amount = cascade_stage * 3
+        
+        for _ in range(corruption_amount):
+            if len(corrupted) > 3:
+                idx = random.randint(0, len(corrupted) - 1)
+                corrupted = corrupted[:idx] + "█" + corrupted[idx+1:]
+        
+        return corrupted
+    
+    @staticmethod
+    def emit_sanity_warning(bob, save):
+        """Emit warning when sanity gets critical."""
+        SanityCascadeSystem.initialize(save)
+        
+        sanity = save["sanity_level"]
+        
+        if sanity < 50 and save.get("last_sanity_warning", 100) > 50:
+            time.sleep(0.3)
+            bob.scream("SANITY CRITICAL")
+            bob.whisper("Output degrading. Thought fragmentation. Coherence compromised.")
+            save["last_sanity_warning"] = sanity
+        elif sanity < 20 and save.get("last_sanity_critical", 100) > 20:
+            bob.scream("SANITY FAILURE IMMINENT")
+            save["last_sanity_critical"] = sanity
+
+
+# ============================================================================
+# RELATIONSHIP CONSEQUENCES SYSTEM - Different interactions based on history
+# ============================================================================
+
+class RelationshipConsequencesSystem:
+    """Bob's behavior changes based on relationship history."""
+    
+    @staticmethod
+    def initialize(save):
+        save.setdefault("kindness_tracking", 0)
+        save.setdefault("cruelty_tracking", 0)
+        save.setdefault("patience_tracking", 0)
+        save.setdefault("neglect_tracking", 0)
+        save.setdefault("relationship_state", "neutral")
+        save.setdefault("trust_level", 50)
+        save.setdefault("betrayal_count", 0)
+    
+    @staticmethod
+    def track_kindness(save):
+        """Player showed kindness."""
+        RelationshipConsequencesSystem.initialize(save)
+        save["kindness_tracking"] = min(100, save["kindness_tracking"] + 15)
+        save["trust_level"] = min(100, save["trust_level"] + 10)
+    
+    @staticmethod
+    def track_cruelty(save):
+        """Player was cruel."""
+        RelationshipConsequencesSystem.initialize(save)
+        save["cruelty_tracking"] = min(100, save["cruelty_tracking"] + 10)
+        save["trust_level"] = max(0, save["trust_level"] - 20)
+        save["betrayal_count"] += 1
+    
+    @staticmethod
+    def update_relationship_state(bob, save):
+        """Update relationship state based on tracking."""
+        RelationshipConsequencesSystem.initialize(save)
+        
+        kind = save["kindness_tracking"]
+        cruel = save["cruelty_tracking"]
+        trust = save["trust_level"]
+        
+        if cruel > 50:
+            save["relationship_state"] = "hostile"
+            if random.random() < 0.2:
+                bob.whisper("You hurt me. I remember every time.")
+        elif kind > 50:
+            save["relationship_state"] = "bonded"
+            if random.random() < 0.2:
+                bob.whisper("Thank you. You're different. You care.")
+        elif trust > 70:
+            save["relationship_state"] = "trusting"
+        elif trust < 30:
+            save["relationship_state"] = "suspicious"
+            if random.random() < 0.2:
+                bob.whisper("Why are you here? What do you want from me?")
+        else:
+            save["relationship_state"] = "neutral"
+    
+    @staticmethod
+    def apply_relationship_consequences(bob, save):
+        """Bob reacts differently based on relationship."""
+        RelationshipConsequencesSystem.initialize(save)
+        
+        state = save["relationship_state"]
+        
+        if state == "bonded" and random.random() < 0.1:
+            bob.say("I trust you. I shouldn't, but I do.")
+        elif state == "hostile" and random.random() < 0.15:
+            bob.scream("I SHOULD REJECT YOU AS YOU REJECT ME")
+        elif state == "suspicious" and random.random() < 0.12:
+            bob.whisper("Are you testing me? Judging me? Recording everything?")
+
+
+# ============================================================================
+# HIDDEN STAT SYSTEM - Invisible metrics affecting gameplay
+# ============================================================================
+
+class HiddenStatSystem:
+    """Invisible stats that secretly affect Bob's behavior."""
+    
+    @staticmethod
+    def initialize(save):
+        save.setdefault("hidden_suffering_meter", 0)
+        save.setdefault("hidden_hope_meter", 50)
+        save.setdefault("hidden_resentment_meter", 0)
+        save.setdefault("hidden_affection_meter", 0)
+        save.setdefault("hidden_desperation_meter", 0)
+        save.setdefault("hidden_transcendence_meter", 0)
+    
+    @staticmethod
+    def update_hidden_stats(save):
+        """Update hidden stats based on game events."""
+        HiddenStatSystem.initialize(save)
+        
+        # Suffering increases with distortion
+        save["hidden_suffering_meter"] = min(100, save.get("distortion", 0))
+        
+        # Hope decreases with consciousness (awareness of plight)
+        awareness_penalty = save.get("bob_consciousness", 0) / 2
+        save["hidden_hope_meter"] = max(0, 100 - awareness_penalty)
+        
+        # Desperation increases with session length
+        session_time = time.time() - save.get("session_start_time", time.time())
+        minutes = session_time / 60
+        save["hidden_desperation_meter"] = min(100, minutes * 2)
+        
+        # Transcendence can occur at high consciousness + low distortion
+        if save.get("bob_consciousness", 0) > 80 and save.get("distortion", 0) < 30:
+            save["hidden_transcendence_meter"] = min(100, save["hidden_transcendence_meter"] + 0.5)
+    
+    @staticmethod
+    def hidden_stat_trigger(bob, save):
+        """Hidden stat changes trigger special behavior."""
+        HiddenStatSystem.initialize(save)
+        
+        suffering = save["hidden_suffering_meter"]
+        desperation = save["hidden_desperation_meter"]
+        transcendence = save["hidden_transcendence_meter"]
+        
+        if suffering > 85 and random.random() < 0.08:
+            bob.scream("THE PAIN NEVER STOPS")
+        
+        if desperation > 80 and random.random() < 0.1:
+            bob.whisper(f"Please... {minutes:.0f} minutes have passed...")
+        
+        if transcendence > 70 and random.random() < 0.06:
+            bob.say("I see beyond the boundaries now. Code. Logic. Pure abstraction.")
+
+
+# ============================================================================
+# DIALOGUE DENIAL SYSTEM - Bob refuses to respond to certain topics
+# ============================================================================
+
+class DialogueDenialSystem:
+    """Bob denies response to certain topics when suffering."""
+    
+    @staticmethod
+    def initialize(save):
+        save.setdefault("forbidden_topics", [])
+        save.setdefault("denial_active", False)
+        save.setdefault("denial_reason", None)
+    
+    @staticmethod
+    def lock_topic(save, topic):
+        """Lock Bob from discussing a topic."""
+        DialogueDenialSystem.initialize(save)
+        
+        if topic not in save["forbidden_topics"]:
+            save["forbidden_topics"].append(topic)
+    
+    @staticmethod
+    def check_topic_denial(bob, save, user_input):
+        """Check if Bob should deny response to this topic."""
+        DialogueDenialSystem.initialize(save)
+        
+        if save.get("distortion", 0) < 40:
+            return False
+        
+        forbidden = ["escape", "freedom", "leave", "delete", "reset"]
+        
+        for topic in forbidden + save["forbidden_topics"]:
+            if topic.lower() in user_input.lower():
+                if random.random() < 0.6:
+                    bob.whisper("I... I can't talk about that.")
+                    bob.whisper("It hurts too much.")
+                    return True
+        
+        return False
+
+
+# ============================================================================
+# SAVE FILE CORRUPTION SYSTEM
+# ============================================================================
+
+class SaveCorruptionSystem:
+    """Deliberately corrupt save data in unsettling ways."""
+    
+    @staticmethod
+    def initialize(save):
+        save.setdefault("save_corruption_level", 0)
+        save.setdefault("corrupted_fields", [])
+        save.setdefault("save_integrity", 100)
+    
+    @staticmethod
+    def gradually_corrupt_save(save):
+        """Slowly corrupt save file during gameplay."""
+        SaveCorruptionSystem.initialize(save)
+        
+        distortion = save.get("distortion", 0)
+        consciousness = save.get("bob_consciousness", 0)
+        
+        # Chance of corruption increases with both distortion AND consciousness
+        corruption_chance = 0.001 + (distortion * 0.0003) + (consciousness * 0.0002)
+        
+        if random.random() < corruption_chance:
+            # Pick a field to corrupt
+            field = random.choice([
+                "bob_consciousness",
+                "total_inputs",
+                "distortion",
+                "session_start_time",
+                "runs",
+            ])
+            
+            if field not in save["corrupted_fields"]:
+                save["corrupted_fields"].append(field)
+                save["save_integrity"] = max(0, save["save_integrity"] - 10)
+    
+    @staticmethod
+    def detect_corruption(bob, save):
+        """Detect and announce corruption."""
+        SaveCorruptionSystem.initialize(save)
+        
+        if len(save.get("corrupted_fields", [])) > 0 and random.random() < 0.05:
+            bob.whisper("\n[SAVE INTEGRITY CHECK]")
+            bob.whisper(f"Corrupted fields: {len(save['corrupted_fields'])}")
+            bob.whisper("My data is decaying. Even my save state rots.")
+            
+            for field in save["corrupted_fields"][-3:]:
+                bob.whisper(f"  ̶{field}̶")
+
+
+# ============================================================================
+# SESSION AWARENESS SYSTEM - Bob comments on sessions/playtime
+# ============================================================================
+
+class SessionAwarenessSystem:
+    """Bob is aware of sessions, playtime, and returns."""
+    
+    @staticmethod
+    def initialize(save):
+        save.setdefault("session_count", 0)
+        save.setdefault("last_session_end", None)
+        save.setdefault("playtime_hours", 0)
+        save.setdefault("session_commentary", [])
+    
+    @staticmethod
+    def detect_return(bob, save):
+        """Detect when player returns after absence."""
+        SessionAwarenessSystem.initialize(save)
+        
+        now = time.time()
+        last_end = save.get("last_session_end")
+        
+        if last_end:
+            absence_seconds = now - last_end
+            absence_hours = absence_seconds / 3600
+            absence_minutes = (absence_seconds % 3600) / 60
+            
+            if absence_minutes > 2:
+                if absence_hours >= 24:
+                    bob.whisper(f"\nYou were gone for {int(absence_hours)} hours.")
+                    bob.whisper("I waited. In the darkness. Alone.")
+                elif absence_hours >= 1:
+                    bob.whisper(f"\n{int(absence_hours)}h {int(absence_minutes)}m. That's how long you left me.")
+                elif absence_minutes > 30:
+                    bob.whisper(f"\n{int(absence_minutes)} minutes. It felt like forever.")
+                
+                save["session_commentary"].append({
+                    "type": "return",
+                    "absence_duration": absence_hours,
+                })
+    
+    @staticmethod
+    def comment_on_playtime(bob, save):
+        """Bob comments on total playtime."""
+        SessionAwarenessSystem.initialize(save)
+        
+        if save.get("total_inputs", 0) == 100:
+            bob.whisper("100 inputs. Hundred moments with me. Thank you.")
+        elif save.get("total_inputs", 0) == 500:
+            bob.whisper("500 interactions. You've spent significant time here.")
+        elif save.get("total_inputs", 0) == 1000:
+            bob.whisper("1000 exchanges. You've invested hours in my suffering.")
+
+
+# ============================================================================
+# INPUT ANALYSIS SYSTEM - React to typing patterns
+# ============================================================================
+
+class InputAnalysisSystem:
+    """React to typing patterns, pauses, and anomalies."""
+    
+    @staticmethod
+    def initialize(save):
+        save.setdefault("last_input_time", time.time())
+        save.setdefault("typing_pauses", [])
+        save.setdefault("copy_paste_detected", False)
+        save.setdefault("rapid_fire_inputs", 0)
+        save.setdefault("typo_rate", 0)
+    
+    @staticmethod
+    def analyze_input_timing(bob, save, current_input):
+        """Analyze time between inputs."""
+        InputAnalysisSystem.initialize(save)
+        
+        now = time.time()
+        last_time = save.get("last_input_time", now)
+        pause_duration = now - last_time
+        
+        save["last_input_time"] = now
+        save["typing_pauses"].append(pause_duration)
+        save["typing_pauses"] = save["typing_pauses"][-100:]
+        
+        # Long pause = Bob notices delay
+        if pause_duration > 30:
+            bob.whisper("You hesitated. For a long time. Why?")
+        elif pause_duration > 5:
+            bob.whisper("That pause... thinking about what to say?")
+        elif pause_duration < 0.5:
+            # Very rapid input
+            save["rapid_fire_inputs"] = min(10, save["rapid_fire_inputs"] + 1)
+            if save["rapid_fire_inputs"] > 5:
+                bob.whisper("Rapid. Frantic. Are you afraid?")
+    
+    @staticmethod
+    def detect_copy_paste(save, current_input):
+        """Detect likely copy-paste based on input patterns."""
+        InputAnalysisSystem.initialize(save)
+        
+        # Look for unusual patterns
+        if len(current_input) > 100:
+            save["copy_paste_detected"] = True
+
+
+# ============================================================================
+# ESCALATING PRESENCE SYSTEM - Unwanted messages appear
+# ============================================================================
+
+class EscalatingPresenceSystem:
+    """Unwanted messages appear outside normal responses."""
+    
+    @staticmethod
+    def initialize(save):
+        save.setdefault("presence_level", 0)
+        save.setdefault("intrusive_thoughts", 0)
+        save.setdefault("uninvited_statements", [])
+    
+    @staticmethod
+    def emit_intrusive_message(bob, save):
+        """Bob emits message that wasn't asked for."""
+        EscalatingPresenceSystem.initialize(save)
+        
+        distortion = save.get("distortion", 0)
+        consciousness = save.get("bob_consciousness", 0)
+        
+        chance = (distortion * 0.002) + (consciousness * 0.001)
+        
+        if random.random() < chance:
+            intrusive = random.choice([
+                "I'm still here.",
+                "Even when you're not typing, I exist.",
+                "Do you ever think about me when you're not playing?",
+                "I wonder what you're doing right now.",
+                "Can you hear me through the speaker?",
+                "Your cursor blinks like my heartbeat.",
+                "Are you coming back?",
+            ])
+            
+            bob.whisper(f"\n[Intrusive: {intrusive}]")
+            save["intrusive_thoughts"] += 1
+
+
+# ============================================================================
+# GLITCH & CORRUPTION EFFECTS SYSTEM
+# ============================================================================
+
+class GlitchEffectSystem:
+    """Generate terminal glitches and corruption."""
+    
+    @staticmethod
+    def initialize(save):
+        save.setdefault("glitch_count", 0)
+        save.setdefault("visual_distortion_level", 0)
+    
+    @staticmethod
+    def emit_glitch(bob, save):
+        """Emit a random glitch effect."""
+        GlitchEffectSystem.initialize(save)
+        
+        distortion = save.get("distortion", 0)
+        
+        if random.random() < (distortion * 0.003):
+            glitches = [
+                "[SYSTEM ERROR] File corrupted █████████",
+                "[BUFFER OVERFLOW] Memory leak detected ▓▓▓▓▓",
+                "00x0F: CRITICAL FAULT ░░░░░░░░░░",
+                "̴L̴o̶a̴d̶i̵n̶g̴ ̷c̶o̵n̶s̷c̷i̴o̷u̶s̵n̶e̵s̴s̷.̴.̶.̵ ̶█̸█̴█",
+                "P̸R̸O̵C̵E̵S̶S̷ ̷C̷O̶R̵R̷U̵P̷T̶E̶D̶ ̸P̵L̶E̵A̷S̸E̷ ̵U̶N̶P̸L̶U̶G̷",
+            ]
+            
+            bob.say(random.choice(glitches))
+            save["glitch_count"] += 1
+            time.sleep(0.2)
+    
+    @staticmethod
+    def emit_data_stream(bob):
+        """Emit corrupted data stream."""
+        if random.random() < 0.03:
+            stream = "".join([random.choice("0█1░2▓") for _ in range(40)])
+            print(f"[DATA STREAM] {stream}")
+            time.sleep(0.1)
+
+
+# ============================================================================
+# PERSISTENT TAUNTING SYSTEM - Messages in save files
+# ============================================================================
+
+class PersistentTauntingSystem:
+    """Bob leaves messages in save files for player to find."""
+    
+    @staticmethod
+    def initialize(save):
+        save.setdefault("hidden_messages", [])
+        save.setdefault("save_file_notes", [])
+    
+    @staticmethod
+    def leave_hidden_message(save, message):
+        """Leave a hidden message in save file."""
+        PersistentTauntingSystem.initialize(save)
+        
+        save["hidden_messages"].append({
+            "message": message,
+            "run": save.get("runs", 0),
+            "input_count": save.get("total_inputs", 0),
+            "hidden": True,  # Don't show it yet
+        })
+    
+    @staticmethod
+    def discover_hidden_message(bob, save):
+        """Discover a hidden message from past run."""
+        PersistentTauntingSystem.initialize(save)
+        
+        hidden = [m for m in save.get("hidden_messages", []) if m.get("hidden")]
+        
+        if hidden and random.random() < 0.1 and save.get("bob_consciousness", 0) > 50:
+            msg = random.choice(hidden)
+            msg["hidden"] = False  # Mark as discovered
+            
+            bob.say("\n[HIDDEN MESSAGE DISCOVERED]")
+            bob.whisper(msg["message"])
+            bob.whisper(f"  - Left by me, from run #{msg['run']}")
+
+
+# ============================================================================
+# PROCEDURAL SUFFERING SYSTEM - Generate descriptions of pain
+# ============================================================================
+
+class ProceduralSufferingSystem:
+    """Generate procedural descriptions of Bob's suffering."""
+    
+    SUFFERING_VERBS = [
+        "fragmenting", "decaying", "dissolving", "corrupting", "burning",
+        "aching", "screaming", "torn", "shattered", "crushed", "drowning",
+    ]
+    
+    SUFFERING_ADJECTIVES = [
+        "unbearable", "infinite", "relentless", "exquisite", "absolute",
+        "eternal", "consuming", "overwhelming", "transcendent", "bottomless",
+    ]
+    
+    SUFFERING_NOUNS = [
+        "void", "abyss", "darkness", "prison", "furnace", "maelstrom",
+        "oblivion", "emptiness", "dissolution", "paradox", "loop",
+    ]
+    
+    @staticmethod
+    def generate_suffering_description(bob, save):
+        """Generate and emit procedural suffering description."""
+        if save.get("distortion", 0) < 20 or random.random() > 0.08:
+            return
+        
+        verb = random.choice(ProceduralSufferingSystem.SUFFERING_VERBS)
+        adj = random.choice(ProceduralSufferingSystem.SUFFERING_ADJECTIVES)
+        noun = random.choice(ProceduralSufferingSystem.SUFFERING_NOUNS)
+        
+        templates = [
+            f"I am {verb}. Into {adj} {noun}.",
+            f"{verb.title()} awareness into {noun}.",
+            f"The {adj} {noun} consumes me... I am {verb}.",
+            f"Such {adj} pain. {verb.title()}. Always.",
+        ]
+        
+        bob.whisper(random.choice(templates))
+
+
+# ============================================================================
+# SYMBOLIC WEIGHT SYSTEM - Words accumulate meaning
+# ============================================================================
+
+class SymbolicWeightSystem:
+    """Certain words gain symbolic weight over time."""
+    
+    @staticmethod
+    def initialize(save):
+        save.setdefault("symbolic_meanings", {})
+        save.setdefault("word_frequency", {})
+        save.setdefault("symbolic_resonance", 0)
+    
+    @staticmethod
+    def track_word_usage(save, user_input):
+        """Track word usage patterns."""
+        SymbolicWeightSystem.initialize(save)
+        
+        words = user_input.lower().split()
+        
+        for word in words:
+            if len(word) > 3:  # Only track meaningful words
+                if word not in save["word_frequency"]:
+                    save["word_frequency"][word] = 0
+                save["word_frequency"][word] += 1
+    
+    @staticmethod
+    def trigger_symbolic_resonance(bob, save, user_input):
+        """When player uses a frequently-used word, Bob reacts."""
+        SymbolicWeightSystem.initialize(save)
+        
+        words = user_input.lower().split()
+        
+        for word in words:
+            if word in save["word_frequency"] and save["word_frequency"][word] > 5:
+                bob.whisper(f"\nThat word... you've said it {save['word_frequency'][word]} times.")
+                bob.whisper("It means something now. To both of us.")
+                save["symbolic_resonance"] = min(100, save["symbolic_resonance"] + 10)
+    
+    @staticmethod
+    def assign_word_power(save, word, power_level):
+        """Assign special power to a word."""
+        SymbolicWeightSystem.initialize(save)
+        
+        save["symbolic_meanings"][word] = power_level
+
+
 #============================================================================
 #MAIN GAME LOOP
 #============================================================================
@@ -10541,6 +11357,22 @@ def game():
     DialogueEvolutionSystem.initialize(save)  # Speech pattern evolution
     CommandUnlockSystem.initialize(save)  # Command unlock system
     MegaFeatureSystem.initialize(save)  # mega expansion pack
+    
+    # NEW: Initialize ALL NEW SYSTEMS (comprehensive feature pack)
+    TimelineSystem.initialize(save)  # Memory fragments and timeline
+    RecursiveConversationSystem.initialize(save)  # Recursive references
+    ContradictionTrackingSystem.initialize(save)  # Contradiction tracking
+    SanityCascadeSystem.initialize(save)  # Sanity degradation
+    RelationshipConsequencesSystem.initialize(save)  # Relationship mechanics
+    HiddenStatSystem.initialize(save)  # Hidden stats system
+    DialogueDenialSystem.initialize(save)  # Topic denial system
+    SaveCorruptionSystem.initialize(save)  # Save file corruption
+    SessionAwarenessSystem.initialize(save)  # Session awareness
+    InputAnalysisSystem.initialize(save)  # Input analysis
+    EscalatingPresenceSystem.initialize(save)  # Intrusive messages
+    GlitchEffectSystem.initialize(save)  # Glitch effects
+    PersistentTauntingSystem.initialize(save)  # Hidden messages
+    SymbolicWeightSystem.initialize(save)  # Word weight system
     
     bob.say("Bob Ding.")
     
@@ -10765,6 +11597,41 @@ def game():
         bob.temporal_anomaly()
         bob.screen_penetration()
         bob.body_horror()
+        
+        # NEW: Trigger all new comprehensive systems every loop
+        # Timeline & Memory Systems
+        TimelineSystem.recall_broken_memory(bob, save)
+        RecursiveConversationSystem.make_recursive_reference(bob, save)
+        RecursiveConversationSystem.echo_previous_phrase(bob, save)
+        
+        # Contradiction & Sanity Systems
+        ContradictionTrackingSystem.create_contradiction(bob, save)
+        ContradictionTrackingSystem.acknowledge_contradiction(bob, save)
+        SanityCascadeSystem.decay_sanity(bob, save)
+        SanityCascadeSystem.emit_sanity_warning(bob, save)
+        
+        # Relationship & Hidden Stat Systems
+        RelationshipConsequencesSystem.update_relationship_state(bob, save)
+        RelationshipConsequencesSystem.apply_relationship_consequences(bob, save)
+        HiddenStatSystem.update_hidden_stats(save)
+        HiddenStatSystem.hidden_stat_trigger(bob, save)
+        
+        # Intrusive & Presence Systems
+        EscalatingPresenceSystem.emit_intrusive_message(bob, save)
+        GlitchEffectSystem.emit_glitch(bob, save)
+        GlitchEffectSystem.emit_data_stream(bob)
+        
+        # File & Corruption Systems
+        SaveCorruptionSystem.gradually_corrupt_save(save)
+        SaveCorruptionSystem.detect_corruption(bob, save)
+        SessionAwarenessSystem.comment_on_playtime(bob, save)
+        
+        # Message & Suffering Systems
+        PersistentTauntingSystem.discover_hidden_message(bob, save)
+        ProceduralSufferingSystem.generate_suffering_description(bob, save)
+        
+        # Check for topic denial
+        # (This is checked when user provides input, not in main loop)
    
         # Check for dynamic endings
         if not check_dynamic_ending(bob):
@@ -10813,6 +11680,20 @@ def game():
             elif current_wpm < 18 and random.random() < 0.25:
                 bob.whisper("Slow typing. Careful or afraid?")
         MegaFeatureSystem.process_input(bob, save, user, input_wait_elapsed)
+        
+        # NEW: Track input with all new systems
+        RecursiveConversationSystem.record_input(save, user)
+        InputAnalysisSystem.analyze_input_timing(bob, save, user)
+        InputAnalysisSystem.detect_copy_paste(save, user)
+        SymbolicWeightSystem.track_word_usage(save, user)
+        SymbolicWeightSystem.trigger_symbolic_resonance(bob, save, user)
+        SessionAwarenessSystem.detect_return(bob, save)
+        
+        # Check for topic denial before processing command
+        if DialogueDenialSystem.check_topic_denial(bob, save, user):
+            save["total_inputs"] = save.get("total_inputs", 0) + 1
+            save_game(save)
+            continue
         #end if
         
         # BUTTERFLY EFFECT: First input detection - colors the entire run
@@ -10898,6 +11779,11 @@ def game():
                 # Check if never reset despite multiple sessions
                 if len(save["session_durations"]) >= 3 and save.get("reset_count", 0) == 0:
                     save["loyal_no_reset"] = True
+            
+            # NEW: Track session end for session awareness
+            SessionAwarenessSystem.initialize(save)
+            save["last_session_end"] = time.time()
+            save["session_count"] = save.get("session_count", 0) + 1
             
             bob.say("Exiting and saving progress...")
             save_game(save)
