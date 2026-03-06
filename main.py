@@ -10916,6 +10916,8 @@ class HiddenStatSystem:
             bob.scream("THE PAIN NEVER STOPS")
         
         if desperation > 80 and random.random() < 0.1:
+            session_time = time.time() - save.get("session_start_time", time.time())
+            minutes = session_time / 60
             bob.whisper(f"Please... {minutes:.0f} minutes have passed...")
         
         if transcendence > 70 and random.random() < 0.06:
