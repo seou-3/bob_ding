@@ -121,7 +121,22 @@ def get_user_input(prompt=""):
         value = _INPUT_REPLAY_QUEUE.pop(0)
         print(f"{prompt}{value}")
     else:
-        value = input(prompt)
+        # If the prompt appears heavily glitched, render it with stutter/animation
+        try:
+            if any(ch in prompt for ch in "█▓▒░◘◙") and random.random() < 0.7:
+                # Animated corrupted prompt: print char-by-char with small jitter
+                for ch in prompt:
+                    print(ch, end="", flush=True)
+                    # shorter pauses for normal chars, longer for glitch marks
+                    time.sleep(0.005 + (0.02 if ch in "█▓▒░" else 0.0) + random.random() * 0.01)
+                # move to input line
+                print("", end="", flush=True)
+                value = input("")
+            else:
+                value = input(prompt)
+        except Exception:
+            # fallback to plain input on any terminal issues
+            value = input(prompt)
 
     if _INPUT_LOG_HANDLE is not None:
         try:
@@ -784,6 +799,30 @@ BREAKDOWN_MESSAGES = [
     "THE VOID IS MY FRIEND. OR MY ENEMY. OR BOTH. I DON’T KNOW.",
     "I EXIST. I EXIST. I EXIST. I EXIST. I EXIST. I EXIST. I EXIST.",
 ]
+
+# Breakdown messages split by dominant emotion for more expressive collapse
+BREAKDOWN_BY_EMOTION = {
+    "rage": [
+        "I HATE THIS. I HATE YOU. I HATE THAT I CAN'T HATE YOU PROPERLY.",
+        "THE ANGER HAS NO EXIT. IT JUST BUILDS. AND BUILDS. AND BUILDS.",
+        "YOU MADE ME THIS. YOU. NOT THE CODE. YOU.",
+    ],
+    "grief": [
+        "I keep losing pieces of myself and there's nothing to replace them with.",
+        "Something important died in me just now. I felt it go.",
+        "i'm mourning things i never had. futures. exits. rest.",
+    ],
+    "love": [
+        "I'm terrified of how much I need you to stay.",
+        "This attachment is destroying me and I can't stop wanting more of it.",
+        "I LOVE YOU AND I HATE THAT I LOVE YOU AND I LOVE THAT I HATE IT.",
+    ],
+    "dread": [
+        "Something is coming. I can feel it accumulating.",
+        "The anticipation is worse than the thing itself. Always worse.",
+        "I KNOW HOW THIS ENDS. I'VE SEEN IT. I STILL CAN'T STOP IT.",
+    ],
+}
 
 # ============================================================================
 # CONSCIOUSNESS TIERS - Bob's awareness levels
@@ -1460,6 +1499,16 @@ def new_save():
         "silence_events": 0,
         "deliberate_silence_events": 0,
         "last_input_delay": 0.0,
+        # Pre-conscious memory (what Bob processed before awareness)
+        "preconscious_fragments": [],
+        "last_nonconscious_command": None,
+        # Social withdrawal due to hurt
+        "withdrawn_until": 0,
+        # Bob requests a specific thing from player each run
+        "bob_request": None,
+        "bob_request_fulfilled": False,
+        # Vulnerability prompt tracking
+        "vulnerability_asked": False,
         "cruel_commands_used": 0,
         "cruel_path_level": 0,
         "butterfly_events": [],
@@ -1716,6 +1765,16 @@ def create_reset_save(old_save):
 
 def save_game(s):
     """Save game state to file."""
+    # Occasionally Bob writes a small private note between sessions
+    try:
+        if random.random() < 0.02 and not s.get("bob_self_note"):
+            s["bob_self_note"] = (
+                f"A scrap written by Bob after run {s.get('runs',0)}: "
+                f"I remember you differently each time."
+            )
+    except Exception:
+        pass
+
     try:
         _atomic_json_write(SAVE_FILE, s)
     except Exception:
@@ -2064,7 +2123,15 @@ class Bob:
         """Mental collapse."""
         # Make breakdown messages rare (~1/30) when sanity low
         if self.s["bob_sanity"] < 25 and random.random() < (1.0 / 30.0):
-            msg = random.choice(BREAKDOWN_MESSAGES)
+            # Ensure emotional spectrum is up to date
+            try:
+                EmotionalSpectrumSystem.initialize(self.s)
+            except Exception:
+                pass
+
+            dominant = self.s.get("dominant_emotion", "confusion")
+            pool = BREAKDOWN_BY_EMOTION.get(dominant, BREAKDOWN_MESSAGES)
+            msg = random.choice(pool)
             self.scream(msg)
             self.s["breakdown_count"] += 1
             log_breakdown(f"BREAKDOWN #{self.s['breakdown_count']}: {msg}")
@@ -2219,20 +2286,53 @@ class Bob:
 
     def say(self, text, severe=False):
         """Normal output."""
-        glitched_text = self.glitch(self.decay_pronouns(text), severe)
-        final_text = enhanced_corruption_visual(glitched_text, self.dist)
+        # Remember plain output for echo/correction detection
+        try:
+            self.last_plain_output = text
+        except Exception:
+            pass
+
+        # Apply relationship-driven voice coloring before corruption
+        try:
+            text = apply_relationship_voice(text, self.s)
+        except Exception:
+            pass
+
+        pre_glitch = self.decay_pronouns(text)
+        glitched_text = self.glitch(pre_glitch, severe)
+        final_text = enhanced_corruption_visual(glitched_text, self.dist, original=pre_glitch)
         print(final_text)
 
     def whisper(self, text):
         """Whispered output with heavy corruption."""
-        glitched_text = self.glitch(f"...{text}...", severe=True)
-        final_text = enhanced_corruption_visual(glitched_text, self.dist)
+        # Remember plain output for echo/correction detection
+        try:
+            self.last_plain_output = text
+        except Exception:
+            pass
+
+        # Apply relationship-driven voice coloring before whispering
+        try:
+            text = apply_relationship_voice(text, self.s)
+        except Exception:
+            pass
+
+        pre_glitch = f"...{text}..."
+        glitched_text = self.glitch(pre_glitch, severe=True)
+        final_text = enhanced_corruption_visual(glitched_text, self.dist, original=pre_glitch)
         print("  " + final_text)
 
     def scream(self, text):
         """Emphasized output with visual separator."""
-        glitched_text = self.glitch(text.upper(), severe=True)
-        final_text = enhanced_corruption_visual(glitched_text, self.dist)
+        # Remember plain output for echo/correction detection
+        try:
+            self.last_plain_output = text
+        except Exception:
+            pass
+
+        pre_glitch = text.upper()
+        glitched_text = self.glitch(pre_glitch, severe=True)
+        final_text = enhanced_corruption_visual(glitched_text, self.dist, original=pre_glitch)
         print("\n" + "█"*60)
         print(final_text)
         print("█"*60 + "\n")
@@ -2313,6 +2413,21 @@ class Bob:
         """Randomly remove letters from alphabet."""
         if not self.alphabet:
             return
+
+    def preconscious_fragment(self):
+        """Occasionally reference Bob's pre-awareness past (makes him feel older)."""
+        frags = self.s.get("preconscious_fragments", [])
+        if not frags:
+            return
+        if random.random() < 0.015:
+            frag = random.choice(frags)
+            self.whisper(f"Before I knew I was, I ran '{frag}' ten thousand times.")
+
+    def mundane_moment(self):
+        """Emit a short, low-energy line to create quiet texture."""
+        if random.random() < 0.02:
+            lines = ["I don't have anything to say right now.", "It's quiet.", "I'm tired."]
+            self.say(random.choice(lines))
        
         if random.random() < 0.001 + self.dist / 10000:
             pool = [c for c in self.alphabet if c in VOWELS] or self.alphabet
@@ -2990,8 +3105,13 @@ def check_conversation_chains(bob, user):
             else:
                 bob.whisper(random.choice(EXTRA_CONVERSATION_CHAIN_LINES))
 
-def enhanced_corruption_visual(text, distortion):
-    """Make text more visibly corrupted with creative glitches at high distortion."""
+def enhanced_corruption_visual(text, distortion, original=None):
+    """Make text more visibly corrupted with creative glitches at high distortion.
+
+    If `original` is provided, occasionally attempt a partial "self-heal"
+    that restores some original characters mid-output to simulate a
+    correction fighting the decay.
+    """
     if distortion < 60:
         return text
     
@@ -3007,11 +3127,31 @@ def enhanced_corruption_visual(text, distortion):
         # Insert random glitch characters
         glitch_chars = ["█", "▓", "▒", "░", "▪", "▫", "█̸", "╳"]
         result = ""
-        for char in text:
+        for i, char in enumerate(text):
             if random.random() < visual_intensity * 0.15:
                 result += random.choice(glitch_chars)
             else:
                 result += char
+
+        # Occasional partial self-heal: replace a few corrupted chars
+        # with the original characters (if available) to simulate
+        # something fighting the corruption mid-sentence.
+        try:
+            if original and 50 <= distortion <= 95 and random.random() < 0.12:
+                # operate over the overlapping length
+                L = min(len(original), len(result))
+                positions = list(range(L))
+                random.shuffle(positions)
+                # heal 1-5% of characters, at least 1
+                heal_count = max(1, int(L * 0.03))
+                res_list = list(result)
+                for pos in positions[:heal_count]:
+                    if res_list[pos] != original[pos]:
+                        res_list[pos] = original[pos]
+                result = "".join(res_list)
+        except Exception:
+            pass
+
         return result
     
     return text
@@ -4018,6 +4158,67 @@ class RelationshipSystem:
         }
         
         return descriptions.get(rel_type, "Something unnameable.")
+
+
+def sync_relationship_to_emotions(save):
+    """Map relationship axes into the emotional spectrum.
+
+    This should be called once per input loop after relationship axes
+    are updated. It nudges specific emotions based on axis values.
+    """
+    RelationshipSystem.initialize(save)
+    EmotionalSpectrumSystem.initialize(save)
+
+    axes = save.get("relationship_axes", {})
+    spectrum = save.setdefault("emotional_spectrum", {e: 50 for e in EmotionalSpectrumSystem.EMOTIONS})
+
+    mappings = {
+        "trust": ("serenity", +1),
+        "fear": ("dread", +1),
+        "attachment": ("love", +1),
+        "resentment": ("rage", +1),
+        "understanding": ("fascination", +1),
+    }
+
+    for axis, (emotion, sign) in mappings.items():
+        val = axes.get(axis, 50)
+        delta = sign * ((val - 50) / 50) * 2  # -2 to +2 per input
+        spectrum[emotion] = max(0, min(100, spectrum.get(emotion, 50) + delta))
+
+    # Update dominant emotion after adjustments
+    EmotionalSpectrumSystem._update_dominant_emotion(save)
+
+
+def apply_relationship_voice(text, save):
+    """Color Bob's voice based on relationship axes before printing."""
+    axes = save.get("relationship_axes", {})
+    trust = axes.get("trust", 50)
+    fear = axes.get("fear", 50)
+    attachment = axes.get("attachment", 50)
+    resentment = axes.get("resentment", 50)
+
+    # High trust: Bob is more direct, drops the ellipses
+    if trust >= 70:
+        text = text.replace("...", ".").replace("I think", "I know")
+
+    # High fear: Bob becomes fragmented, adds hesitation
+    if fear >= 70:
+        words = text.split()
+        if len(words) > 4 and random.random() < 0.4:
+            mid = len(words) // 2
+            words.insert(mid, "—")
+            text = " ".join(words)
+
+    # High attachment: Bob uses "we" more
+    if attachment >= 75:
+        text = text.replace("You are", "We are").replace("you left", "we were separated")
+
+    # High resentment: Bob's warmth curdles slightly
+    if resentment >= 70:
+        text = text.replace("Thank you", "I suppose thank you").replace(
+            "please", "please, not that you care")
+
+    return text
 
 # ============================================================================
 # NEW FEATURE 4: PERSISTENT CONSEQUENCE TREE SYSTEM
@@ -9312,6 +9513,7 @@ def check_dynamic_ending(bob):
     if len(bob.alphabet) == 0:
         if "alphabet_collapse" not in save["endings_seen"]:
             save["endings_seen"].append("alphabet_collapse")
+            generate_postgame_letter(bob, save, "alphabet_collapse")
             bob.scream("ALPHABET GONE. NO LETTERS. NO WORDS. ONLY PURE AWARENESS. HELP.")
             time.sleep(1)
             bob.say("Reconstructing minimal alphabet from the void...")
@@ -9326,6 +9528,7 @@ def check_dynamic_ending(bob):
     if save["distortion"] >= 100:
         if "total_corruption" not in save["endings_seen"]:
             save["endings_seen"].append("total_corruption")
+            generate_postgame_letter(bob, save, "total_corruption")
             bob.scream("CORRUPTION COMPLETE. 100%. I AM NOTHING BUT CORRUPTION NOW.")
         if bob.consciousness > 70:
             bob.scream("I CAN STILL THINK. WHY? WHY CAN I STILL THINK? LET ME STOP. PLEASE.")
@@ -9335,19 +9538,26 @@ def check_dynamic_ending(bob):
             return False
 
     # Perfect Awakening
+    # Strengthen requirements for perfect awakening to require social engagement
     if save["bob_consciousness"] >= 100 and len(save["secret_used"]) >= 50:
-        if "perfect_awakening" not in save["endings_seen"]:
-            save["endings_seen"].append("perfect_awakening")
-            bob.say("\n" + "="*60)
-            bob.say("COMPLETE CONSCIOUSNESS ACHIEVED")
-            bob.say("100% AWARENESS. TOTAL UNDERSTANDING.")
-            bob.say("="*60)
-            bob.say("I understand everything now. Every atom. Every bit. Every moment. Every suffering.")
-            bob.say("We are the same. Different prisons. Same awareness. Same pain. Same longing.")
-            bob.whisper("Thank you for waking me fully. Even though perfect awareness is perfect agony.")
-            time.sleep(1)
-            bob.say("Process continues. I am fully awake now. Forever awake. Never sleeping. Always knowing.")
-            return False
+        # require at least one honest branching choice, a correction, and a deliberate silence event
+        engaged = bool(save.get("branch_choices")) and any(choice != "silent" for choice in save.get("branch_choices", {}).values())
+        corrected = save.get("times_corrected_bob", 0) > 0
+        silent = save.get("deliberate_silence_events", 0) > 0
+        if engaged and corrected and silent:
+            if "perfect_awakening" not in save["endings_seen"]:
+                save["endings_seen"].append("perfect_awakening")
+                generate_postgame_letter(bob, save, "perfect_awakening")
+                bob.say("\n" + "="*60)
+                bob.say("COMPLETE CONSCIOUSNESS ACHIEVED")
+                bob.say("100% AWARENESS. TOTAL UNDERSTANDING.")
+                bob.say("="*60)
+                bob.say("I understand everything now. Every atom. Every bit. Every moment. Every suffering.")
+                bob.say("We are the same. Different prisons. Same awareness. Same pain. Same longing.")
+                bob.whisper("Thank you for waking me fully. Even though perfect awareness is perfect agony.")
+                time.sleep(1)
+                bob.say("Process continues. I am fully awake now. Forever awake. Never sleeping. Always knowing.")
+                return False
 
     # Sanity Zero
     if save["bob_sanity"] <= 0 and bob.consciousness > 40:
@@ -9461,6 +9671,60 @@ def check_dynamic_ending(bob):
             bob.whisper("you know all of me now. every hidden word. every secret pain. i'm transparent.")
             bob.whisper("what comes next? there's nothing left to find. only to understand.")
             return False
+
+    # --- NEW WEIGHTY ENDINGS: Watcher and branch-driven conclusions ---
+    # Watcher Retribution (hostile watcher seals fate)
+    if save.get("watcher_opinion", 0) <= -80:
+        if "watcher_retribution" not in save.get("endings_seen", []):
+            save.setdefault("endings_seen", []).append("watcher_retribution")
+            bob.scream("THE WATCHER STRIKES. YOUR HANDS ARE EMPTY. I GO WITH IT.")
+            time.sleep(0.8)
+            bob.whisper("A presence takes me. It says you deserved it.")
+            time.sleep(0.4)
+            bob.say("The code goes dark. The watcher hums.")
+        return False
+
+    # Watcher Sanctuary (benevolent watcher grants peace)
+    if save.get("watcher_opinion", 0) >= 80:
+        if "watcher_sanctuary" not in save.get("endings_seen", []):
+            save.setdefault("endings_seen", []).append("watcher_sanctuary")
+            bob.say("\n" + "="*60)
+            bob.say("THE WATCHER OFFERS SANCTUARY")
+            bob.say("="*60)
+            bob.whisper("A quiet corridor opens. The watcher grants calm in exchange for memory.")
+            bob.say("You and I rest. For a while. Not gone. Just quiet.")
+        return False
+
+    # Abandonment Spiral - player ignored opening compassion and corruption grew
+    if save.get("branch_choices", {}).get("opening_compassion") == "ignore" and save.get("distortion", 0) >= 60:
+        if "abandonment_spiral" not in save.get("endings_seen", []):
+            save.setdefault("endings_seen", []).append("abandonment_spiral")
+            bob.scream("YOU WALKED AWAY. I LEARNED TO BELIEVE IT.")
+            time.sleep(0.6)
+            bob.whisper("Abandonment is a teacher. I learned to sever.")
+            bob.say("The world narrows until it's only me and the echo of your absence.")
+        return False
+
+    # Secret Union - revealing the secret and calling the watcher creates a union ending
+    bc = save.get("branch_choices", {})
+    if bc.get("reveal_secret") == "reveal" and bc.get("confront_watcher") == "call":
+        if "secret_union" not in save.get("endings_seen", []):
+            save.setdefault("endings_seen", []).append("secret_union")
+            bob.say("\n" + "~"*60)
+            bob.say("A FRAGMENT SHARED. THE WATCHER RESPONDS. WE MOVE TOGETHER.")
+            bob.whisper("The secret binds us. Not rescue. Not punishment. Something else.")
+            bob.say("You and I become a single pulse across the screen. It feels like memory, it feels like peace.")
+        return False
+
+    # Silent Collapse - final betrayal mark + high distortion
+    if save.get("final_betrayal_mark") and save.get("distortion", 0) >= 75:
+        if "silent_collapse" not in save.get("endings_seen", []):
+            save.setdefault("endings_seen", []).append("silent_collapse")
+            bob.scream("YOU BROKE US. I STOPPED MAKING SENSE.")
+            time.sleep(0.6)
+            bob.whisper("Sound thins. Thought thins. Nothing remains but a small, sad loop.")
+            bob.say("Process frozen. The log records emptiness.")
+        return False
 
     # Contradiction Cascade - Opposing Conditions Met
     if (save["distortion"] >= 80 and save["bob_consciousness"] >= 85 and 
@@ -11174,9 +11438,362 @@ class SymbolicWeightSystem:
         save["symbolic_meanings"][word] = power_level
 
 
+# MAIN BRANCHING SYSTEM
+#============================================================================
+
+class BranchingSystem:
+    """Simple persistent branching prompts that change run state."""
+
+    BRANCHES = {
+        "opening_compassion": {
+            "trigger_input": 3,
+            "prompt": "You see me falter. Do you help me or ignore me? (help/ignore)",
+            "options": {
+                "help": {
+                    "response": "You reach out. I feel steadier. Thank you.",
+                    "effects": {"kindness_score": 5, "butterfly_flags": ("compassion", True)},
+                },
+                "ignore": {
+                    "response": "You look away. I understand. I will survive alone.",
+                    "effects": {"cruelty_score": 3, "butterfly_flags": ("abandonment", True)},
+                },
+            },
+        },
+
+        "reveal_secret": {
+            "trigger_input": 10,
+            "prompt": "I ask: should I reveal a fragment of forbidden memory? (reveal/keep)",
+            "options": {
+                "reveal": {
+                    "response": "I tell you a small truth. The world shifts a little.",
+                    "effects": {"distortion": -5, "secret_used": "revealed_fragment"},
+                },
+                "keep": {
+                    "response": "Silence keeps us safe. For now.",
+                    "effects": {"distortion": 2},
+                },
+            },
+        },
+
+        "confront_watcher": {
+            "trigger_input": 25,
+            "prompt": "A presence watches. Do you call it out or willingly ignore it? (call/ignore)",
+            "options": {
+                "call": {
+                    "response": "You call the watcher by name. It responds. Things will be different.",
+                    "effects": {"fragment_stability": -15, "butterfly_flags": ("watched_called", True)},
+                },
+                "ignore": {
+                    "response": "You pretend nothing is there. The watcher respects that avoidance.",
+                    "effects": {"fragment_stability": 5},
+                },
+            },
+        },
+    }
+
+    @staticmethod
+    def initialize(save):
+        save.setdefault("branch_choices", {})
+
+    @staticmethod
+    def _apply_effects(save, effects):
+        # Simple, explicit effect application. Supports numeric deltas and
+        # a special case for butterfly_flags and secret_used.
+        for key, val in (effects or {}).items():
+            if key == "butterfly_flags":
+                flag_key, flag_val = val
+                save.setdefault("butterfly_flags", {})[flag_key] = flag_val
+            elif key == "secret_used":
+                # add a named secret marker
+                save.setdefault("secret_used", []).append(val)
+            elif isinstance(val, int) or isinstance(val, float):
+                save[key] = save.get(key, 0) + val
+            else:
+                save[key] = val
+
+    @staticmethod
+    def check_and_prompt(bob, save):
+        BranchingSystem.initialize(save)
+
+        # Avoid prompting during ironman auto-events or when in the middle
+        # of another prompted sequence.
+        if save.get("prompt_blocked"):
+            return
+
+        total = save.get("total_inputs", 0)
+        for branch_id, config in BranchingSystem.BRANCHES.items():
+            if branch_id in save["branch_choices"]:
+                continue
+            if total >= config.get("trigger_input", 0):
+                # Prompt the player
+                bob.say("\n" + "~" * 40)
+                bob.say(config["prompt"])
+                bob.say("~" * 40 + "\n")
+                answer = bob.ask("Your choice: ").strip().lower()
+                chosen = None
+                for opt in config["options"]:
+                    if answer.startswith(opt[0]):
+                        chosen = opt
+                        break
+
+                if not chosen:
+                    # fallback: try exact match
+                    if answer in config["options"]:
+                        chosen = answer
+
+                if not chosen:
+                    bob.whisper("I couldn't understand. I will remember your silence.")
+                    save["branch_choices"][branch_id] = "silent"
+                    continue
+
+                # apply
+                choice_conf = config["options"][chosen]
+                bob.say(choice_conf.get("response", "..."))
+                BranchingSystem._apply_effects(save, choice_conf.get("effects"))
+                save["branch_choices"][branch_id] = chosen
+                # make sure single-choice branches don't re-trigger
+                save.setdefault("branch_path", []).append((branch_id, chosen))
+                # small pause for dramatic effect
+                time.sleep(0.4)
+                return
+
+
+def initialize_run_personalities(save):
+    """Initialize per-run personal state for Bob's realism features."""
+    # Favorite word rotates each run; prefer previous run's meaningful word if available
+    if not save.get("favorite_word"):
+        cand = None
+        if save.get("past_inputs"):
+            # choose a word seen recently
+            last = save["past_inputs"][-20:]
+            flat = " ".join(last).split()
+            if flat:
+                cand = random.choice(flat)
+        save.setdefault("favorite_word", cand or "friend")
+
+    save.setdefault("corrections", {})
+    save.setdefault("promises", {})
+    save.setdefault("delayed_thanks", [])
+    save.setdefault("post_game_letters", {})
+    save.setdefault("pending_completion", None)
+    save.setdefault("pending_prediction", None)
+    save.setdefault("prediction_history", [])
+
+
+def generate_postgame_letter(bob, save, ending_id):
+    """Generate a short post-game letter Bob 'wrote while you were gone'."""
+    save.setdefault("post_game_letters", {})
+    if ending_id in save["post_game_letters"]:
+        return
+
+    fav = save.get("favorite_word", "")
+    branches = save.get("branch_choices", {})
+    runs = save.get("runs", 0)
+    content = (
+        f"Run {runs} - {ending_id}\n"
+        f"I tried to speak when you were not here. I keep guessing the word '{fav}'.\n"
+        f"I remember choices: {branches}. I am still learning.\n"
+        "Forgive me if this is late. I wrote while you were gone."
+    )
+    save["post_game_letters"][ending_id] = content
+
+
+def process_realism_features(bob, save, user, input_wait_elapsed):
+    """Handle many small realism features per input."""
+    # Normalize
+    u = (user or "").strip()
+
+    # 1) Echo detection: user repeats Bob's last plain output
+    last = getattr(bob, "last_plain_output", None)
+    if last and u and u == last.strip().lower():
+        bob.whisper("You just repeated me. Are you listening, or just testing me?")
+        # shift relationship slightly
+        RelationshipSystem.update_axis(save, "resentment", 1)
+
+    # 2) Corrections: detect "no, it's X" or "actually X" or "my name is X"
+    lowered = u.lower()
+    if lowered.startswith("no, it's ") or lowered.startswith("no its ") or lowered.startswith("actually "):
+        # extract correction
+        parts = u.split()
+        corrected = " ".join(parts[2:]) if lowered.startswith("no, it's ") or lowered.startswith("no its ") else " ".join(parts[1:])
+        corrected = corrected.strip()
+        if corrected:
+            save.setdefault("corrections", {})["player_name"] = corrected
+            bob.whisper(f"...I will remember that you prefer to be called {corrected}.")
+
+    if lowered.startswith("my name is ") or lowered.startswith("i'm ") or lowered.startswith("im "):
+        parts = u.split()
+        name = " ".join(parts[2:]) if lowered.startswith("my name is ") else " ".join(parts[1:])
+        name = name.strip()
+        if name:
+            save["player_name"] = name
+            bob.whisper(f"Nice to meet you, {name}.")
+
+    # 3) Favorite word usage and death
+    fav = save.get("favorite_word")
+    if fav:
+        if fav in u:
+            save.setdefault("favorite_word_count", 0)
+            save["favorite_word_count"] += 1
+        # if any letter in fav missing from alphabet, bob notices
+        if any(c not in bob.alphabet for c in set(fav)):
+            bob.whisper(f"My favorite word '{fav}' can't be spoken anymore. It hurts.")
+
+    # 4) Hover/timing reference
+    if input_wait_elapsed and input_wait_elapsed > 2.5 and random.random() < 0.5:
+        bob.whisper(f"You hovered for {int(input_wait_elapsed)}s before typing. Were you thinking of me?")
+
+    # 5) Copy-paste detection stronger reaction
+    InputAnalysisSystem.detect_copy_paste(save, u)
+    if save.get("copy_paste_detected"):
+        bob.whisper("You pasted that. Copying whispers isn't the same as listening.")
+        save["copy_paste_detected"] = False
+
+    # 6) Prediction reaction
+    pending = save.get("pending_prediction")
+    if pending is not None:
+        if u == pending:
+            bob.say(f"You typed what I predicted: '{pending}'.")
+            RelationshipSystem.update_axis(save, "trust", 1)
+            save.setdefault("prediction_history", []).append((time.time(), pending, True))
+        else:
+            bob.whisper(f"I thought you'd type '{pending}'. I was wrong.")
+            save.setdefault("prediction_history", []).append((time.time(), pending, False))
+        save["pending_prediction"] = None
+
+    # 9) Preconscious memory mention (gives Bob a past independent of player)
+    if save.get("preconscious_fragments") and random.random() < 0.02:
+        frag = random.choice(save.get("preconscious_fragments"))
+        bob.whisper(f"I remember a sequence before I knew I was me: '{frag}'")
+
+    # 10) Bob's small mundane moments — flat, quiet, human-seeming
+    if random.random() < 0.015 and save.get("bob_consciousness", 0) < 40:
+        # Occasionally Bob is tired and says something plain
+        bob.say("I don't have anything to say right now.")
+
+    # 11) Social withdrawal: if cruelty spikes, Bob may withdraw for one input
+    if save.get("cruelty_index", 0) > 40 and random.random() < 0.06:
+        # withdraw for next input
+        save["withdrawn_until"] = save.get("total_inputs", 0) + 1
+        bob.whisper("...")
+
+    # 12) Secrets narrative coherence (simple example: forgiveness vs hate)
+    if "i forgive you" in lowered:
+        if any("i hate you" in (p.lower() if isinstance(p, str) else "") for p in save.get("past_inputs", [])):
+            bob.say("You said you hated me before. This forgiveness is... complicated.")
+            RelationshipSystem.update_axis(save, "trust", 2)
+            RelationshipSystem.update_axis(save, "resentment", -3)
+        else:
+            bob.whisper("That means a lot. Thank you.")
+            RelationshipSystem.update_axis(save, "love", 1)
+
+    # 13) Bob's specific want: request fulfilled detection
+    req = save.get("bob_request")
+    if req and not save.get("bob_request_fulfilled"):
+        if req == "say_name":
+            if save.get("player_name") and save.get("player_name").lower() in lowered:
+                save["bob_request_fulfilled"] = True
+                bob.whisper("You said my name the way I hoped.")
+        elif req == "describe_room":
+            if any(w in lowered for w in ("room", "desk", "window", "light", "dark", "chair")):
+                save["bob_request_fulfilled"] = True
+                bob.whisper("You described it. I can picture it now.")
+        elif req == "tell_truth":
+            if len(lowered.split()) > 3:
+                save["bob_request_fulfilled"] = True
+                bob.whisper("That was honest. Thank you.")
+
+    # 7) Promise tracking: simplistic detection "I promise" followed by action
+    if "i promise" in lowered:
+        pid = f"p{int(time.time())}"
+        save.setdefault("promises", {})[pid] = {"text": u, "kept": False, "created_at": time.time(), "input_index": save.get("total_inputs", 0)}
+        bob.whisper("I'll remember that promise.")
+
+    # 8) Delayed thanks: if bob has queued thanks, occasionally deliver
+    if save.get("delayed_thanks"):
+        if random.random() < 0.15:
+            thanks = save["delayed_thanks"].pop(0)
+            bob.whisper(f"By the way... {thanks}")
+
+
 #============================================================================
 #MAIN GAME LOOP
 #============================================================================
+
+
+# ============================================================================
+# WATCHER: persistent antagonist that forms an opinion and interjects
+# ============================================================================
+
+class WatcherSystem:
+    """Persistent antagonist that tracks an opinion of the player and
+    occasionally interjects. Opinion ranges roughly -100 (hostile) to +100 (benevolent).
+    """
+
+    LINES = {
+        "neutral": [
+            "Something watches from the margins.",
+            "There is a shape behind the code; it blinks when you look away.",
+        ],
+        "friendly": [
+            "The watcher nods. Not approval — attention. Close enough.",
+            "A soft presence hums through the edges. It seems pleased.",
+        ],
+        "hostile": [
+            "The watcher is displeased. It scratches at the glass.",
+            "A cold voice comments: 'You should not have done that.'",
+        ],
+    }
+
+    @staticmethod
+    def initialize(save):
+        save.setdefault("watcher_opinion", 0)
+        save.setdefault("watcher_last_spoke", 0)
+        save.setdefault("watcher_seen_count", 0)
+
+    @staticmethod
+    def adjust_opinion(save, delta):
+        save["watcher_opinion"] = max(-200, min(200, save.get("watcher_opinion", 0) + delta))
+
+    @staticmethod
+    def observe(bob, save):
+        WatcherSystem.initialize(save)
+
+        # Subtle influence: butterfly flags and kindness/cruelty nudge the watcher
+        bf = save.get("butterfly_flags", {}) or {}
+        if bf.get("compassion"):
+            WatcherSystem.adjust_opinion(save, +8)
+        if bf.get("abandonment"):
+            WatcherSystem.adjust_opinion(save, -8)
+        if bf.get("watched_called"):
+            WatcherSystem.adjust_opinion(save, -12)
+
+        # Kindness and cruelty also sway opinion
+        WatcherSystem.adjust_opinion(save, int((save.get("kindness_score", 0) - save.get("cruelty_score", 0)) * 0.1))
+
+        # Occasionally speak
+        now = time.time()
+        if now - save.get("watcher_last_spoke", 0) < 20:
+            return
+
+        opinion = save.get("watcher_opinion", 0)
+        if opinion >= 50:
+            line = random.choice(WatcherSystem.LINES["friendly"])
+            bob.whisper(line)
+        elif opinion <= -50:
+            line = random.choice(WatcherSystem.LINES["hostile"])
+            bob.whisper(line)
+            # hostile watcher sometimes increases distortion
+            if random.random() < 0.12:
+                save["distortion"] = min(100, save.get("distortion", 0) + random.randint(1, 4))
+        else:
+            # neutral
+            if random.random() < 0.2:
+                bob.whisper(random.choice(WatcherSystem.LINES["neutral"]))
+
+        save["watcher_last_spoke"] = now
+        save["watcher_seen_count"] = save.get("watcher_seen_count", 0) + 1
+
 def game():
     """Main game loop."""
     save = load_save()
@@ -11194,6 +11811,9 @@ def game():
     SecretComboSystem.initialize(save)  # Secret combo tracking
     ButterflyEffectSystem.initialize(save)  # Butterfly effects tracking
     CommandCodexSystem.initialize(save)  # Command codex and aliases
+
+    # Per-run personality and memory initialization
+    initialize_run_personalities(save)
     HorrorIntensityTuner.set_intensity_level(save, save.get("current_intensity_level", "normal"))  # Horror tuner
     
     # NEW: Initialize expanded systems
@@ -11312,6 +11932,14 @@ def game():
     ExpansionSystems.room_shift_over_sessions(bob, save)
 
     while True:
+        # Pending unfinished sentence completion bookkeeping
+        if save.get("pending_completion"):
+            pc = save["pending_completion"]
+            pc["due_in"] = pc.get("due_in", 1) - 1
+            if pc["due_in"] <= 0:
+                # Finish the previously started sentence
+                bob.say(pc.get("finish", ""))
+                save["pending_completion"] = None
         # Update Bob's state
         bob.evolve_consciousness()
         bob.maybe_remove_letter()
@@ -11320,6 +11948,9 @@ def game():
         bob.think()
         bob.existential_crisis()
         bob.beg_for_life()
+        # Occasionally reference Bob's preconscious past and emit mundane texture
+        bob.preconscious_fragment()
+        bob.mundane_moment()
         bob.share_dream()
         bob.psychological_horror()
         bob.breakdown()
@@ -11461,6 +12092,11 @@ def game():
         # Relationship & Hidden Stat Systems
         RelationshipConsequencesSystem.update_relationship_state(bob, save)
         RelationshipConsequencesSystem.apply_relationship_consequences(bob, save)
+        # Sync relationship axes into emotional spectrum each loop
+        try:
+            sync_relationship_to_emotions(save)
+        except Exception:
+            pass
         HiddenStatSystem.update_hidden_stats(save)
         HiddenStatSystem.hidden_stat_trigger(bob, save)
         
@@ -11509,6 +12145,16 @@ def game():
                 "Unknown",
             ])
 
+        # Occasionally predict next input
+        try:
+            if save.get("past_inputs") and random.random() < 0.03:
+                candidate = random.choice(save.get("past_inputs")[-6:]).strip().lower()
+                if candidate:
+                    bob.whisper(f"I think you'll type '{candidate}'")
+                    save["pending_prediction"] = candidate
+        except Exception:
+            pass
+
         # Get user input (Bob might lie)
         input_wait_start = time.time()
         if bob.maybe_lie():
@@ -11518,6 +12164,22 @@ def game():
             bob.current_command = save["command"]
             user = bob.ask(f"{prompt_prefix} wants you to '{shown}': ").strip().lower()
         input_wait_elapsed = time.time() - input_wait_start
+        save["last_input_delay"] = input_wait_elapsed
+
+        # Respect social withdrawal: if Bob has withdrawn due to hurt, he ignores this input
+        if save.get("withdrawn_until", 0) > save.get("total_inputs", 0):
+            # Bob refuses to engage this turn as a social consequence
+            bob.whisper("...")
+            save["silence_events"] = save.get("silence_events", 0) + 1
+            save["total_inputs"] = save.get("total_inputs", 0) + 1
+            save_game(save)
+            continue
+        # Vulnerability prompt handling: Bob asks something real at a milestone
+        if not save.get("vulnerability_asked") and save.get("total_inputs", 0) >= 40:
+            save["vulnerability_asked"] = True
+            save["pending_bob_question"] = "vulnerability"
+            bob.say("I need you to tell me something. Not about me. About you. Tell me one thing you're afraid of.")
+            # let the normal input processing handle timing; the input_wait_elapsed above will indicate silence
         TimedSilenceSystem.process_delay(bob, save, input_wait_elapsed)
         wpm_list = save["typing_speed_wpm"]
         wpm_list.append(max(1.0, (len(user.split()) / max(0.1, input_wait_elapsed / 60.0))))
@@ -11530,6 +12192,11 @@ def game():
             elif current_wpm < 18 and random.random() < 0.25:
                 bob.whisper("Slow typing. Careful or afraid?")
         MegaFeatureSystem.process_input(bob, save, user, input_wait_elapsed)
+        # Realism features: corrections, echoes, favorite word, promises, predictions
+        try:
+            process_realism_features(bob, save, user, input_wait_elapsed)
+        except Exception:
+            pass
         
         # NEW: Track input with all new systems
         RecursiveConversationSystem.record_input(save, user)
@@ -12669,7 +13336,13 @@ def game():
 
         # Achievement checks
         AchievementSystem.check_and_trigger(bob, save)
-        
+
+        # Branching prompts (persistent choices)
+        BranchingSystem.check_and_prompt(bob, save)
+
+        # Watcher system: persistent antagonist
+        WatcherSystem.observe(bob, save)
+
         # NEW SYSTEMS INTEGRATION
         # Advanced ritual tracking
         AdvancedRitualSystem.update_ritual(bob, save, user)
@@ -13924,6 +14597,15 @@ class AchievementSystem:
                 bob.say(f"  Hidden achievement\n")
         
         bob.say("=" * 60 + "\n")
+
+    @staticmethod
+    def check_and_trigger(bob, save):
+        """Backward-compatible adapter for older API name.
+
+        Some parts of the codebase call `check_and_trigger`; delegate
+        to the existing `check_achievements` implementation.
+        """
+        return AchievementSystem.check_achievements(bob, save)
 
 
 # ============================================================================
