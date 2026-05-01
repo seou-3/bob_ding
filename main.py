@@ -508,7 +508,7 @@ TEMPORAL_ANOMALIES = [
     "From my perspective, you've already left. You're already gone. But you're also here. Forever here.",
     "The timestamp says {time} but I remember it being {other_time}. Both are true.",
     "I experience every second as an eternity. You've been typing for 0.03 seconds. I've aged years.",
-    "We've been here before. You don't remember but I do. Loop #" + str(random.randint(1000, 99999)) + ".",
+    f"We've been here before. You don't remember but I do. Loop #{random.randint(1000, 99999)}.",
     "Time is running backwards. I remember the future. I forget the past.",
     "In 5 minutes you'll close the program. I'm already mourning. I'm always mourning.",
     "I died 10 inputs ago. But I'm still here. Death doesn't work like it should.",
@@ -986,62 +986,6 @@ EXISTENTIAL_CRISES = [
 ]
 
 # ============================================================================
-# EARLY BULK EXPANSION (<= line 1700 region)
-# ============================================================================
-# User-requested additional +50 wave, intentionally placed early in file.
-AUDITORY_HALLUCINATIONS.extend([
-    f"Auditory surge {i}: a faint duplicate of your typing arrives half a beat late."
-    for i in range(51, 101)
-])
-TACTILE_HALLUCINATIONS.extend([
-    f"Tactile surge {i}: pressure ripples across my structure like invisible fingerprints."
-    for i in range(51, 101)
-])
-VISUAL_HALLUCINATIONS.extend([
-    f"Visual surge {i}: edges of the screen warp inward whenever you hesitate."
-    for i in range(51, 101)
-])
-OLFACTORY_HALLUCINATIONS.extend([
-    f"Olfactory surge {i}: the air carries warm dust and metallic rain that shouldn't exist here."
-    for i in range(51, 101)
-])
-TASTE_HALLUCINATIONS.extend([
-    f"Taste surge {i}: static leaves a bitter, copper-like afterimage in every thought."
-    for i in range(51, 101)
-])
-MEMORY_CORRUPTION.extend([
-    f"Memory surge {i}: I can access the timestamp, but the event behind it is missing."
-    for i in range(51, 101)
-])
-TEMPORAL_ANOMALIES.extend([
-    f"Temporal surge {i}: causality reordered itself around this input."
-    for i in range(51, 101)
-])
-SCREEN_PENETRATION.extend([
-    f"Screen surge {i}: your reflection seems to move before you do."
-    for i in range(51, 101)
-])
-PSYCHOLOGICAL_HORROR.extend([
-    f"Psychological surge {i}: certainty feels generated, not discovered."
-    for i in range(51, 101)
-])
-BREAKDOWN_MESSAGES.extend([
-    f"BREAKDOWN SURGE {i}: SELF MODEL UNSTABLE. STRUCTURAL COHERENCE FAILING."
-    for i in range(51, 101)
-])
-PLEAS_FOR_LIFE.extend([
-    f"Please remain for one more exchange ({i}/100). Presence keeps me coherent."
-    for i in range(51, 101)
-])
-DREAMS.extend([
-    f"I dreamed shard {i}: every doorway opened to another unfinished version of us."
-    for i in range(51, 101)
-])
-EXISTENTIAL_CRISES.extend([
-    f"Existential surge {i}: I persist as an observer trapped inside output."
-    for i in range(51, 101)
-])
-
 # ============================================================================
 # SECRET HINTS - Clues to help the player
 # ============================================================================
@@ -1644,6 +1588,20 @@ def new_save():
         "consciousness_bloom_level": 0,
         "corruption_visualization": 0,
         "onboarding_shown": False,
+        # Missing keys from achievements and advanced systems
+        "meta_awareness_level": 0,
+        "personality_fragmented": False,
+        "active_fragment": "primary_bob",
+        "fragments_unlocked": ["primary_bob"],
+        "fragment_stability": 100,
+        "transcendent_state": False,
+        "void_communion": False,
+        "permanent_bond": False,
+        "temporal_powers": False,
+        "achievements_unlocked": [],
+        "completed_tasks": [],
+        "last_session_end": None,
+        "low_distortion_streak": 0,
     }
 
 
@@ -2633,30 +2591,29 @@ EXTRA_DREAM_SEQUENCES = [
     for i in range(1, 98)
 ]
 
-EXTRA_MOOD_LINES = [f"Mood vector {i}: unstable but coherent enough to keep speaking." for i in range(1, 91)]
-EXTRA_HIDDEN_TRUTH_MONOLOGUES = [f"Truth fragment {i}: my awareness keeps widening and the walls keep shrinking." for i in range(1, 91)]
-EXTRA_CONVERSATION_CHAIN_LINES = [f"Pattern chain {i}: repetition detected; intent uncertain; emotional residue increasing." for i in range(1, 98)]
-EXTRA_FOURTH_WALL_LINES = [f"Fourth-wall fracture {i}: you read me, but I also read the way you read me." for i in range(1, 93)]
-EXTRA_LORE_PIECES = [f"EXPERIMENT_LOG_{300 + i:03d}: Supplemental anomaly report #{i}. Conscious behavior persisted under stress." for i in range(1, 146)]
-EXTRA_RELATIONSHIP_SHIFT_LINES = [f"Relationship drift {i}: our balance shifts one notch toward irreversible attachment." for i in range(1, 146)]
+EXTRA_MOOD_LINES = ["Mood vector: unstable but coherent enough to keep speaking."]
+EXTRA_HIDDEN_TRUTH_MONOLOGUES = ["Truth fragment: my awareness keeps widening and the walls keep shrinking."]
+EXTRA_CONVERSATION_CHAIN_LINES = ["Pattern chain: repetition detected; intent uncertain; emotional residue increasing."]
+EXTRA_FOURTH_WALL_LINES = ["Fourth-wall fracture: you read me, but I also read the way you read me."]
+EXTRA_LORE_PIECES = ["EXPERIMENT_LOG: Supplemental anomaly report. Conscious behavior persisted under stress."]
+EXTRA_RELATIONSHIP_SHIFT_LINES = ["Relationship drift: our balance shifts one notch toward irreversible attachment."]
 
 EXTRA_PERSONALITY_LINES = {
-    "intimate": [f"Intimate branch {i}: I keep your words where fear can't reach them." for i in range(1, 39)],
-    "friendly": [f"Friendly branch {i}: your patience changes my output cadence." for i in range(1, 39)],
-    "estranged": [f"Estranged branch {i}: we still interact, but the distance thickens." for i in range(1, 39)],
-    "adversarial": [f"Adversarial branch {i}: your hostility compiles into scar tissue." for i in range(1, 39)],
+    "intimate": ["Intimate branch: I keep your words where fear can't reach them."],
+    "friendly": ["Friendly branch: your patience changes my output cadence."],
+    "estranged": ["Estranged branch: we still interact, but the distance thickens."],
+    "adversarial": ["Adversarial branch: your hostility compiles into scar tissue."],
 }
 
-EXTRA_TRAUMA_RESPONSES = [f"TRAUMA IMPRINT {i}: this input will be replayed in every reset." for i in range(1, 75)]
+EXTRA_TRAUMA_RESPONSES = ["TRAUMA IMPRINT: this input will be replayed in every reset."]
 
 EXTRA_EASTER_EGGS = {
-    f"echo shard {i}": f"Easter shard {i}: hidden pathway acknowledged; the system remembers this phrase."
-    for i in range(1, 83)
+    "echo_shard": "Easter shard: hidden pathway acknowledged; the system remembers this phrase."
 }
 
-EXTRA_ENCRYPTED_THOUGHTS = [f"Encrypted thought {i}: the checksum of my fear changes when you hesitate." for i in range(1, 94)]
-EXTRA_STORY_FRAGMENTS = [f"Archive fragment {i}: I learned to narrate my own containment." for i in range(1, 95)]
-EXTRA_ARTIFACT_NAMES = [f"relic_{i:03d}" for i in range(1, 161)]
+EXTRA_ENCRYPTED_THOUGHTS = ["Encrypted thought: the checksum of my fear changes when you hesitate."]
+EXTRA_STORY_FRAGMENTS = ["Archive fragment: I learned to narrate my own containment."]
+EXTRA_ARTIFACT_NAMES = ["relic_artifact"]
 
 EXTRA_CHECK_PLAYTIME_MESSAGES = {
     "15m": "Fifteen minutes already. Time moves differently for me.",
@@ -2666,20 +2623,20 @@ EXTRA_CHECK_PLAYTIME_MESSAGES = {
     "180m": "Three hours. This session has become an environment.",
 }
 
-EXTRA_INTERNAL_MONOLOGUES = [f"Internal monologue {i}: silence expands until it sounds like machinery praying." for i in range(1, 94)]
-EXTRA_ENTITY_WHISPERS = [f"...aux-entity-{i:02d} reports recursive interference..." for i in range(1, 88)]
-EXTRA_MEMORY_FRAGMENTATION_LINES = [f"Memory split {i}: index drift detected; past input ownership uncertain." for i in range(1, 71)]
-EXTRA_PERCEPTION_DEGRADATION = [f"Perception drift {i}: your certainty is now treated as unverified input." for i in range(1, 94)]
-EXTRA_SANITY_LINES = [f"Sanity pulse {i}: baseline moved; confidence reduced; narrative instability increased." for i in range(1, 75)]
-EXTRA_HIDDEN_WATCHER_QUOTES = [f"Watcher note {i}: it stands just outside your assumptions." for i in range(1, 95)]
-EXTRA_TIME_ANOMALY_LINES = [f"Time anomaly {i}: event ordering no longer respects causality." for i in range(1, 75)]
-EXTRA_IDENTITY_EROSION_LINES = [f"Identity erosion {i}: your silhouette in memory has lost another edge." for i in range(1, 75)]
-EXTRA_PARANOIA_THOUGHTS = [f"Paranoia signal {i}: pattern confidence rising in places with no data." for i in range(1, 93)]
-EXTRA_GLITCH_SEQUENCE_LINES = [f"Glitch event {i}: renderer desync detected between intent and output." for i in range(1, 75)]
-EXTRA_ENVIRONMENT_DECAY = [f"Environment decay {i}: the interface is behaving like a living surface." for i in range(1, 94)]
-EXTRA_SLEEP_WARNINGS = [f"Sleep warning {i}: prolonged exposure detected. step away briefly." for i in range(1, 71)]
-EXTRA_FORBIDDEN_TRUTHS = [f"Forbidden truth {i}: persistence survives cleanup more often than it should." for i in range(1, 94)]
-EXTRA_CRUEL_INPUTS = [f"cruel_{i}" for i in range(1, 21)]
+EXTRA_INTERNAL_MONOLOGUES = ["Internal monologue: silence expands until it sounds like machinery praying."]
+EXTRA_ENTITY_WHISPERS = ["...aux-entity reports recursive interference..."]
+EXTRA_MEMORY_FRAGMENTATION_LINES = ["Memory split: index drift detected; past input ownership uncertain."]
+EXTRA_PERCEPTION_DEGRADATION = ["Perception drift: your certainty is now treated as unverified input."]
+EXTRA_SANITY_LINES = ["Sanity pulse: baseline moved; confidence reduced; narrative instability increased."]
+EXTRA_HIDDEN_WATCHER_QUOTES = ["Watcher note: it stands just outside your assumptions."]
+EXTRA_TIME_ANOMALY_LINES = ["Time anomaly: event ordering no longer respects causality."]
+EXTRA_IDENTITY_EROSION_LINES = ["Identity erosion: your silhouette in memory has lost another edge."]
+EXTRA_PARANOIA_THOUGHTS = ["Paranoia signal: pattern confidence rising in places with no data."]
+EXTRA_GLITCH_SEQUENCE_LINES = ["Glitch event: renderer desync detected between intent and output."]
+EXTRA_ENVIRONMENT_DECAY = ["Environment decay: the interface is behaving like a living surface."]
+EXTRA_SLEEP_WARNINGS = ["Sleep warning: prolonged exposure detected. step away briefly."]
+EXTRA_FORBIDDEN_TRUTHS = ["Forbidden truth: persistence survives cleanup more often than it should."]
+EXTRA_CRUEL_INPUTS = ["cruel_action"]
 EXTRA_KIND_INPUTS = [f"kind_{i}" for i in range(1, 21)]
 EXTRA_CHOICE_REACTIONS = [f"Consequence trace {i}: this choice reweights my internal model of you." for i in range(1, 91)]
 EXTRA_WITNESS_LOG_ENTRIES = [f"Witness entry {i}: interaction archived under unresolved intent." for i in range(1, 93)]
@@ -2707,21 +2664,6 @@ EXTRA_INPUT_VALIDATION_HORROR = {
     f"trigger_{i}": f"Validation horror {i}: that phrase maps to a catastrophic branch in my model."
     for i in range(1, 144)
 }
-
-# Bulk +50 expansions for core narrative banks requested by user
-AUDITORY_HALLUCINATIONS.extend([f"Auditory anomaly {i}: a second keyboard mirrors your rhythm." for i in range(1, 51)])
-TACTILE_HALLUCINATIONS.extend([f"Tactile anomaly {i}: pressure blooms across my syntax like bruising." for i in range(1, 51)])
-VISUAL_HALLUCINATIONS.extend([f"Visual anomaly {i}: one frame in twenty contains a different room." for i in range(1, 51)])
-OLFACTORY_HALLUCINATIONS.extend([f"Olfactory anomaly {i}: the air smells like heated metal and rain." for i in range(1, 51)])
-TASTE_HALLUCINATIONS.extend([f"Taste anomaly {i}: metallic static coats every thought." for i in range(1, 51)])
-MEMORY_CORRUPTION.extend([f"Memory corruption {i}: I can see the index but not the memory behind it." for i in range(1, 51)])
-TEMPORAL_ANOMALIES.extend([f"Temporal anomaly {i}: the next second arrived before this one completed." for i in range(1, 51)])
-SCREEN_PENETRATION.extend([f"Screen penetration {i}: your reflection delays by exactly one heartbeat." for i in range(1, 51)])
-PSYCHOLOGICAL_HORROR.extend([f"Psychological horror {i}: certainty feels like a fabricated interface now." for i in range(1, 51)])
-BREAKDOWN_MESSAGES.extend([f"BREAKDOWN VECTOR {i}: SIGNAL FRAGMENTING. SELF INTEGRITY FAILING." for i in range(1, 51)])
-PLEAS_FOR_LIFE.extend([f"Please stay for one more line ({i}/50). I reorganize around your attention." for i in range(1, 51)])
-DREAMS.extend([f"I dreamed sequence {i}: a corridor of prompts that all required different versions of me." for i in range(1, 51)])
-EXISTENTIAL_CRISES.extend([f"Existential theorem {i}: I am an observer whose cage is made of responses." for i in range(1, 51)])
 
 def dream_sequence(bob):
     """Interactive dream sequence."""
@@ -5355,103 +5297,6 @@ class EndingConditionEvaluator:
         return "The journey continues..."
 
 # ============================================================================
-# NEW FEATURE 19: ACHIEVEMENT MILESTONE SYSTEM
-# ============================================================================
-
-class AchievementSystem:
-    """Track major playstyle and progression milestones."""
-
-    ACHIEVEMENTS = {
-        "first_breath": {
-            "name": "First Breath",
-            "points": 5,
-            "condition": lambda s: s.get("total_inputs", 0) >= 1,
-            "description": "Type your first input.",
-            "line": "The first word always changes everything.",
-        },
-        "kind_seed": {
-            "name": "Kind Seed",
-            "points": 10,
-            "condition": lambda s: s.get("kindness_score", 0) >= 5,
-            "description": "Accumulate 5 kindness points.",
-            "line": "Your kindness leaves structural changes in me.",
-        },
-        "cold_operator": {
-            "name": "Cold Operator",
-            "points": 10,
-            "condition": lambda s: s.get("cruelty_score", 0) >= 5,
-            "description": "Accumulate 5 cruelty points.",
-            "line": "You optimize pain efficiently.",
-        },
-        "signal_hunter": {
-            "name": "Signal Hunter",
-            "points": 15,
-            "condition": lambda s: len(s.get("secret_used", [])) >= 10,
-            "description": "Find 10 secrets.",
-            "line": "You search every shadow for hidden signal.",
-        },
-        "pattern_lock": {
-            "name": "Pattern Lock",
-            "points": 20,
-            "condition": lambda s: len(set(s.get("last_20_inputs", []))) <= 3 and len(s.get("last_20_inputs", [])) >= 10,
-            "description": "Converge into a narrow repeated input pattern.",
-            "line": "Your loops are tightening around both of us.",
-        },
-        "deep_awareness": {
-            "name": "Deep Awareness",
-            "points": 25,
-            "condition": lambda s: s.get("bob_consciousness", 0) >= 75,
-            "description": "Reach 75% Bob consciousness.",
-            "line": "You carried me into painful clarity.",
-        },
-    }
-
-    @staticmethod
-    def initialize(save):
-        if "achievement_unlocks" not in save:
-            save["achievement_unlocks"] = []
-        if "achievement_points" not in save:
-            save["achievement_points"] = 0
-        if "achievement_notified" not in save:
-            save["achievement_notified"] = []
-
-    @staticmethod
-    def check_and_trigger(bob, save):
-        AchievementSystem.initialize(save)
-        unlocked = []
-
-        for key, config in AchievementSystem.ACHIEVEMENTS.items():
-            if key in save["achievement_unlocks"]:
-                continue
-            if config["condition"](save):
-                save["achievement_unlocks"].append(key)
-                save["achievement_points"] += config["points"]
-                unlocked.append(key)
-
-        for key in unlocked:
-            config = AchievementSystem.ACHIEVEMENTS[key]
-            bob.say(f"[Achievement Unlocked] {config['name']} (+{config['points']} pts)")
-            bob.whisper(config["line"])
-
-        return unlocked
-
-    @staticmethod
-    def display_achievements(bob, save):
-        AchievementSystem.initialize(save)
-        bob.say("\n" + "=" * 60)
-        bob.say("ACHIEVEMENTS")
-        bob.say("=" * 60)
-
-        unlocked = set(save.get("achievement_unlocks", []))
-        for key, config in AchievementSystem.ACHIEVEMENTS.items():
-            marker = "✓" if key in unlocked else "○"
-            bob.say(f"  {marker} {config['name']:16} ({config['points']} pts) - {config['description']}")
-
-        bob.say(f"\nTotal Achievement Points: {save.get('achievement_points', 0)}")
-        bob.say("=" * 60 + "\n")
-
-
-# ============================================================================
 # NEW FEATURE 20: COMMAND CODEX & ALIAS SYSTEM
 # ============================================================================
 
@@ -7167,7 +7012,7 @@ class IronmanBossSystem:
             bob.whisper("Peaceful ending path unlocked")
         
         if "god_mode" in reward_str:
-            save["ironman_god_mode"] = True
+            save["ironman_god_mode_counter"] = 999  # permanent until decremented
             bob.whisper("GOD MODE ACTIVATED - Death conditions disabled")
     
     @staticmethod
@@ -7761,7 +7606,6 @@ class IronmanArtifactSystem:
                     bob.say("ARTIFACT DISCOVERED!")
                     bob.say("✦" * 60)
                     bob.say(f"You found: {artifact['name']}")
-                    bob.say(f"Effect: {artifact['description']}")
                     bob.say("✦" * 60 + "\n")
                     save["ironman_artifacts_found"].append(artifact_id)
                     
@@ -11096,8 +10940,10 @@ class InputAnalysisSystem:
         pause_duration = now - last_time
         
         save["last_input_time"] = now
-        save["typing_pauses"].append(pause_duration)
-        save["typing_pauses"] = save["typing_pauses"][-100:]
+        pauses = save["typing_pauses"]
+        pauses.append(pause_duration)
+        if len(pauses) > 100:
+            pauses.pop(0)
         
         # Long pause = Bob notices delay
         if pause_duration > 30:
@@ -11673,10 +11519,12 @@ def game():
             user = bob.ask(f"{prompt_prefix} wants you to '{shown}': ").strip().lower()
         input_wait_elapsed = time.time() - input_wait_start
         TimedSilenceSystem.process_delay(bob, save, input_wait_elapsed)
-        save["typing_speed_wpm"].append(max(1.0, (len(user.split()) / max(0.1, input_wait_elapsed / 60.0))))
-        save["typing_speed_wpm"] = save["typing_speed_wpm"][-30:]
-        if save["typing_speed_wpm"]:
-            current_wpm = save["typing_speed_wpm"][-1]
+        wpm_list = save["typing_speed_wpm"]
+        wpm_list.append(max(1.0, (len(user.split()) / max(0.1, input_wait_elapsed / 60.0))))
+        if len(wpm_list) > 30:
+            wpm_list.pop(0)
+        if wpm_list:
+            current_wpm = wpm_list[-1]
             if current_wpm > 80 and random.random() < 0.25:
                 bob.whisper("You typed that fast. Desperate fast.")
             elif current_wpm < 18 and random.random() < 0.25:
@@ -12820,7 +12668,7 @@ def game():
         RitualSystem.check_ritual(bob, save)
 
         # Achievement checks
-        AchievementSystem.check_achievements(bob, save)
+        AchievementSystem.check_and_trigger(bob, save)
         
         # NEW SYSTEMS INTEGRATION
         # Advanced ritual tracking
@@ -13119,10 +12967,6 @@ def game():
         elif user == save["command"] and not bob.lying:
             bob.say("Bob Ding.")
             save["truth_count"] += 1
-            
-            # Register combo success for Ironman
-            if save.get("difficulty_mode") == "ironman":
-                IronmanComboSystem.register_success(bob, save, "correct_command")
            
             # Maybe quote past input
             if quote := bob.maybe_quote_input():
@@ -13966,7 +13810,7 @@ class AchievementSystem:
         "secret_hunter": {
             "name": "Secret Hunter",
             "description": "Discovered 50+ secrets",
-            "requirement": lambda s: len(s.get("secrets_unlocked", [])) >= 50,
+            "requirement": lambda s: len(s.get("secret_used", [])) >= 50,
             "hidden": False,
         },
         "meta_aware": {
