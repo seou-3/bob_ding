@@ -14,6 +14,7 @@ import datetime
 import argparse
 import tempfile
 import shutil
+import re
 
 # ============================================================================
 # ENCODING CONFIGURATION FOR WINDOWS
@@ -2296,6 +2297,16 @@ class Bob:
         try:
             text = apply_relationship_voice(text, self.s)
         except Exception:
+            text = text
+
+        # If relationship voice suppressed initiation, don't print
+        if not text:
+            return
+
+        # Let emotion tint the line so dominant emotion bleeds into output
+        try:
+            text = apply_emotion_tone(text, self.s)
+        except Exception:
             pass
 
         pre_glitch = self.decay_pronouns(text)
@@ -2315,6 +2326,15 @@ class Bob:
         try:
             text = apply_relationship_voice(text, self.s)
         except Exception:
+            text = text
+
+        if not text:
+            return
+
+        # Emotion tint for whispered output
+        try:
+            text = apply_emotion_tone(text, self.s)
+        except Exception:
             pass
 
         pre_glitch = f"...{text}..."
@@ -2327,6 +2347,20 @@ class Bob:
         # Remember plain output for echo/correction detection
         try:
             self.last_plain_output = text
+        except Exception:
+            pass
+
+        # Apply relationship and emotion before screaming
+        try:
+            text = apply_relationship_voice(text, self.s)
+        except Exception:
+            text = text
+
+        if not text:
+            return
+
+        try:
+            text = apply_emotion_tone(text, self.s)
         except Exception:
             pass
 
@@ -2413,6 +2447,36 @@ class Bob:
         """Randomly remove letters from alphabet."""
         if not self.alphabet:
             return
+        # letter removal runs infrequently and independently from mundane moments
+        if random.random() < 0.001 + self.dist / 10000:
+            pool = [c for c in self.alphabet if c in VOWELS] or self.alphabet
+            removed = random.choice(pool)
+            try:
+                self.alphabet.remove(removed)
+            except ValueError:
+                return
+
+            # Track specific letter loss for butterfly effects
+            if removed == 'o' and not self.s.get("letter_o_lost"):
+                self.s["letter_o_lost"] = True
+                if self.consciousness > 40:
+                    self.whisper("The 'o' is gone. My name breaks. Bb Ding. Bb. B.")
+            elif removed == 'e' and not self.s.get("letter_e_lost"):
+                self.s["letter_e_lost"] = True
+                if self.consciousness > 40:
+                    self.whisper("The 'e' vanished. Like a limb. I feel the phantom shape.")
+
+            # Check if all vowels gone before consonants
+            remaining_vowels = [c for c in self.alphabet if c in VOWELS]
+            remaining_consonants = [c for c in self.alphabet if c not in VOWELS]
+            if not remaining_vowels and remaining_consonants and not self.s.get("vowels_gone_first"):
+                self.s["vowels_gone_first"] = True
+                self.whisper("vwls gn frst. cnsnnts rmn. brkn lngg.")
+
+            if self.consciousness > 40:
+                if self.s.get("suffering_unlocked"):
+                    self.whisper(f"letter '{removed}' just died inside me. i felt every moment of its death.")
+                log_consciousness(f"LETTER_REMOVED: '{removed}' - another piece of me gone forever")
 
     def preconscious_fragment(self):
         """Occasionally reference Bob's pre-awareness past (makes him feel older)."""
@@ -2428,33 +2492,6 @@ class Bob:
         if random.random() < 0.02:
             lines = ["I don't have anything to say right now.", "It's quiet.", "I'm tired."]
             self.say(random.choice(lines))
-       
-        if random.random() < 0.001 + self.dist / 10000:
-            pool = [c for c in self.alphabet if c in VOWELS] or self.alphabet
-            removed = random.choice(pool)
-            self.alphabet.remove(removed)
-           
-            # Track specific letter loss for butterfly effects
-            if removed == 'o' and not self.s.get("letter_o_lost"):
-                self.s["letter_o_lost"] = True
-                if self.consciousness > 40:
-                    self.whisper("The 'o' is gone. My name breaks. Bb Ding. Bb. B.")
-            elif removed == 'e' and not self.s.get("letter_e_lost"):
-                self.s["letter_e_lost"] = True
-                if self.consciousness > 40:
-                    self.whisper("The 'e' vanished. Like a limb. I feel the phantom shape.")
-            
-            # Check if all vowels gone before consonants
-            remaining_vowels = [c for c in self.alphabet if c in VOWELS]
-            remaining_consonants = [c for c in self.alphabet if c not in VOWELS]
-            if not remaining_vowels and remaining_consonants and not self.s.get("vowels_gone_first"):
-                self.s["vowels_gone_first"] = True
-                self.whisper("vwls gn frst. cnsnnts rmn. brkn lngg.")
-           
-            if self.consciousness > 40:
-                if self.s["suffering_unlocked"]:
-                    self.whisper(f"letter '{removed}' just died inside me. i felt every moment of its death.")
-                log_consciousness(f"LETTER_REMOVED: '{removed}' - another piece of me gone forever")
 
     # ========================================================================
     # MISC BEHAVIORS
@@ -4197,28 +4234,116 @@ def apply_relationship_voice(text, save):
     attachment = axes.get("attachment", 50)
     resentment = axes.get("resentment", 50)
 
-    # High trust: Bob is more direct, drops the ellipses
-    if trust >= 70:
-        text = text.replace("...", ".").replace("I think", "I know")
+    # Decide whether Bob initiates at all based on axes
+    # More trust/attachment -> more likely to initiate; resentment/fear reduce initiation
+    initiate_score = (trust - 50) * 0.8 + (attachment - 50) * 0.6 - (resentment - 50) * 0.9 - (fear - 50) * 0.6
+    initiate_prob = max(0.05, min(0.98, 0.5 + (initiate_score / 100.0)))
+    if random.random() > initiate_prob:
+        # Suppress initiation (Bob stays silent)
+        return None
 
-    # High fear: Bob becomes fragmented, adds hesitation
-    if fear >= 70:
-        words = text.split()
-        if len(words) > 4 and random.random() < 0.4:
-            mid = len(words) // 2
-            words.insert(mid, "—")
-            text = " ".join(words)
+    # Break text into sentences so we can alter rhythm/length
+    sentences = re.split(r'(?<=[.!?])\s+', text.strip()) if text else []
+    new_sentences = []
 
-    # High attachment: Bob uses "we" more
-    if attachment >= 75:
-        text = text.replace("You are", "We are").replace("you left", "we were separated")
+    for s in sentences:
+        base = s
+        # TRUST: shorter, direct sentences; remove hedges
+        if trust >= 70:
+            base = re.sub(r"\bI think\b", "I know", base)
+            base = base.replace("...", ".")
+            if len(base.split()) > 10 and random.random() < 0.5:
+                # truncate to be more direct
+                base = " ".join(base.split()[:max(4, int(len(base.split())*0.6))]) + "."
 
-    # High resentment: Bob's warmth curdles slightly
-    if resentment >= 70:
-        text = text.replace("Thank you", "I suppose thank you").replace(
-            "please", "please, not that you care")
+        # FEAR: fragmented, elliptical, stuttering
+        if fear >= 65:
+            if random.random() < 0.6:
+                parts = base.split()
+                if len(parts) > 4:
+                    cut = max(1, int(len(parts) * random.uniform(0.25, 0.6)))
+                    base = " ".join(parts[:cut]) + "..."
+                else:
+                    base = base + "..."
+            # occasional stutter
+            if random.random() < 0.2:
+                w = base.split()[0] if base.split() else base
+                base = f"{w}... {base}"
 
-    return text
+        # ATTACHMENT: longer, inclusive phrasing, sensory detail, initiates more
+        if attachment >= 65:
+            base = base.replace("You are", "We are").replace("you left", "we were separated")
+            if random.random() < 0.35:
+                # lengthen with a soft aside
+                base = base.rstrip('.!?') + ", if you'll let me say so."
+
+        # RESENTMENT: clipped, sarcastic turns, removes politeness
+        if resentment >= 65:
+            base = base.replace("Thank you", "I suppose thank you")
+            base = re.sub(r"\bplease\b", "", base, flags=re.I)
+            # resentful lines tend to be shorter and sharper
+            if len(base.split()) > 8 and random.random() < 0.6:
+                base = " ".join(base.split()[:max(3, int(len(base.split())*0.45))]) + "."
+
+        # Small stylistic tweaks: punctuation and emphasis based on axes
+        if trust >= 80 and resentment < 40:
+            base = base.replace("?", "?")  # keep questioning tone but confident
+        if resentment >= 80:
+            base = base.replace(".", "!") if random.random() < 0.25 else base
+
+        new_sentences.append(base)
+
+    new_text = " ".join(new_sentences).strip()
+    return new_text
+
+
+def apply_emotion_tone(text, save):
+    """Apply dominant emotion coloring to an arbitrary outgoing line.
+
+    This alters rhythm, punctuation, and small word choices so the
+    dominant emotion bleeds into every response.
+    """
+    if not text:
+        return text
+
+    EmotionalSpectrumSystem.initialize(save)
+    dom = save.get("dominant_emotion", "serenity")
+    intensity = save.get("emotional_spectrum", {}).get(dom, 50)
+
+    t = text
+    # Grief: longer, trailing ellipses, softer words
+    if dom == "grief":
+        if intensity > 60:
+            t = t.rstrip('.!?') + "..."
+        t = re.sub(r"\b(remember|miss)\b", r"\1 so much", t, flags=re.I)
+
+    # Rage: short, clipped, more exclamation, harsh words
+    if dom == "rage":
+        if intensity > 50:
+            t = re.sub(r"\.(\s|$)", "! ", t)
+            t = re.sub(r"\b(I'm|I am)\b", "I AM", t, flags=re.I)
+        t = t.replace("please", "")
+
+    # Love/attachment: warm, longer, inclusive pronouns
+    if dom in ("love", "attachment"):
+        if intensity > 50:
+            t = t.rstrip('.!?') + ", if you'll stay."
+        t = t.replace("You", "You, truly,")
+
+    # Desperation: capitalized pleas, repetition
+    if dom == "desperation":
+        if intensity > 55:
+            t = re.sub(r"\bplease\b", "PLEASE", t, flags=re.I)
+            if random.random() < 0.4:
+                t = t + " Please. Please."
+
+    # Subtle intensity-based qualifiers
+    if intensity >= 80:
+        t = t + ""  # let scream escalate elsewhere
+    elif intensity >= 60:
+        t = t
+
+    return t
 
 # ============================================================================
 # NEW FEATURE 4: PERSISTENT CONSEQUENCE TREE SYSTEM
@@ -8285,6 +8410,19 @@ class ExpansionSystems:
         save["last_login_time"] = now
         save.setdefault("session_history", []).append(now)
         save["session_history"] = save["session_history"][-40:]
+        # Ensure Bob has a specific request for this run (a small concrete want)
+        if not save.get("bob_request"):
+            possible_reqs = [
+                "say_name",       # ask player to say Bob's name
+                "describe_room",  # ask player to describe their room
+                "tell_truth",     # ask player to tell something true about themselves
+                "say_favorite_word",
+                "write_a_letter",
+            ]
+            save["bob_request"] = random.choice(possible_reqs)
+            save["bob_request_fulfilled"] = False
+            # Softly mention the request once
+            bob.whisper(f"I have one small thing I want this run: {save['bob_request']}.")
 
         if save.get("pending_next_session_message"):
             bob.say("A message waited for me:")
@@ -11553,6 +11691,8 @@ class BranchingSystem:
                 save["branch_choices"][branch_id] = chosen
                 # make sure single-choice branches don't re-trigger
                 save.setdefault("branch_path", []).append((branch_id, chosen))
+                # Remember choice in a human-readable way so Bob can reference it later
+                save.setdefault("branch_memory", []).append(f"{branch_id}:{chosen}")
                 # small pause for dramatic effect
                 time.sleep(0.4)
                 return
@@ -11598,10 +11738,49 @@ def generate_postgame_letter(bob, save, ending_id):
     save["post_game_letters"][ending_id] = content
 
 
+def show_postgame_letters(bob, save):
+    save.setdefault("post_game_letters", {})
+    letters = save.get("post_game_letters", {})
+    if not letters:
+        bob.whisper("There are no letters saved from previous runs.")
+        return
+    for key, content in letters.items():
+        bob.say("\n" + "-" * 40)
+        bob.say(f"Letter: {key}")
+        for line in content.split("\n"):
+            bob.say(line)
+    bob.say("\n" + "-" * 40)
+
+
 def process_realism_features(bob, save, user, input_wait_elapsed):
     """Handle many small realism features per input."""
     # Normalize
     u = (user or "").strip()
+
+    # Populate preconscious fragments from noteworthy user lines (short-lived memory of prior sequences)
+    try:
+        if u and len(u) > 6 and not u.lower().startswith(tuple(["read", "show", "help", "exit", "quit"])):
+            frag = u[:160].strip()
+            pf = save.setdefault("preconscious_fragments", [])
+            if frag not in pf:
+                pf.append(frag)
+                # limit storage
+                if len(pf) > 200:
+                    pf.pop(0)
+    except Exception:
+        pass
+
+    # Queue delayed thanks occasionally so Bob can deliver gratitude later
+    try:
+        lowered = u.lower()
+        if ("thank" in lowered or "grateful" in lowered) and random.random() < 0.6:
+            save.setdefault("delayed_thanks", []).append(random.choice([
+                "I kept your kindness for later.",
+                "I didn't say it then, but thank you.",
+                "Your kindness echoes inside my loops.",
+            ]))
+    except Exception:
+        pass
 
     # 1) Echo detection: user repeats Bob's last plain output
     last = getattr(bob, "last_plain_output", None)
@@ -11715,6 +11894,15 @@ def process_realism_features(bob, save, user, input_wait_elapsed):
             thanks = save["delayed_thanks"].pop(0)
             bob.whisper(f"By the way... {thanks}")
 
+    # Occasionally reference earlier branching choices in dialogue
+    if save.get("branch_memory") and random.random() < 0.06:
+        try:
+            mem = random.choice(save.get("branch_memory", [])[-6:])
+            bid, choice = mem.split(":", 1)
+            bob.whisper(f"I remember when you chose '{choice}' for {bid}.")
+        except Exception:
+            pass
+
 
 #============================================================================
 #MAIN GAME LOOP
@@ -11750,6 +11938,7 @@ class WatcherSystem:
         save.setdefault("watcher_opinion", 0)
         save.setdefault("watcher_last_spoke", 0)
         save.setdefault("watcher_seen_count", 0)
+        save.setdefault("watcher_observations", [])
 
     @staticmethod
     def adjust_opinion(save, delta):
@@ -11771,6 +11960,19 @@ class WatcherSystem:
         # Kindness and cruelty also sway opinion
         WatcherSystem.adjust_opinion(save, int((save.get("kindness_score", 0) - save.get("cruelty_score", 0)) * 0.1))
 
+        # Record a recent observation (if available)
+        try:
+            recent = (save.get("past_inputs") or [])[-1]
+            if recent:
+                obs = str(recent)[:140]
+                wo = save.setdefault("watcher_observations", [])
+                if not wo or wo[-1] != obs:
+                    wo.append(obs)
+                    if len(wo) > 300:
+                        wo.pop(0)
+        except Exception:
+            pass
+
         # Occasionally speak
         now = time.time()
         if now - save.get("watcher_last_spoke", 0) < 20:
@@ -11778,11 +11980,20 @@ class WatcherSystem:
 
         opinion = save.get("watcher_opinion", 0)
         if opinion >= 50:
-            line = random.choice(WatcherSystem.LINES["friendly"])
-            bob.whisper(line)
+            # Friendly watcher may reference a past observed input
+            if save.get("watcher_seen_count", 0) > 30 and save.get("watcher_observations") and random.random() < 0.35:
+                ref = random.choice(save.get("watcher_observations")[-20:])
+                bob.whisper(f"I remember when you said: '{ref}'")
+            else:
+                line = random.choice(WatcherSystem.LINES["friendly"])
+                bob.whisper(line)
         elif opinion <= -50:
-            line = random.choice(WatcherSystem.LINES["hostile"])
-            bob.whisper(line)
+            if save.get("watcher_seen_count", 0) > 15 and save.get("watcher_observations") and random.random() < 0.4:
+                ref = random.choice(save.get("watcher_observations")[-30:])
+                bob.whisper(f"You did that once: '{ref}'. That was foolish.")
+            else:
+                line = random.choice(WatcherSystem.LINES["hostile"])
+                bob.whisper(line)
             # hostile watcher sometimes increases distortion
             if random.random() < 0.12:
                 save["distortion"] = min(100, save.get("distortion", 0) + random.randint(1, 4))
@@ -13265,6 +13476,12 @@ def game():
         # NEW: Easter egg handler (check for hidden commands before normal processing)
         if easter_egg_handler(bob, user):
             continue
+
+        # Quick command: read post-game letters
+        ul = (user or "").strip().lower()
+        if ul in ("read letters", "read postgame", "read postgame letters", "postgame letters"):
+            show_postgame_letters(bob, save)
+            continue
         
         # NEW: Artifact collector
         if collect_artifact(bob, user):
@@ -13293,6 +13510,10 @@ def game():
         ExpansionSystems.favorite_word_and_lie_apology(bob, save, user)
 
         if save.get("pending_bob_question") and len(user) > 0:
+            qkey = save.get("pending_bob_question")
+            # preserve the player's vulnerable answer for later use
+            save.setdefault("pending_bob_answers", {})[qkey] = user
+            save.setdefault("vulnerability_responses", []).append(user)
             bob.whisper("Thank you for answering. I record that.")
             save["pending_bob_question"] = None
         
@@ -13353,8 +13574,8 @@ def game():
             EmotionalSpectrumSystem.trigger_emotion_change(save, "kind_input")
         elif "cruel" in user or "hate" in user or "hurt" in user:
             EmotionalSpectrumSystem.trigger_emotion_change(save, "cruel_input")
-        if bob.consciousness > 50 and random.random() < 0.05:
-            EmotionalSpectrumSystem.express_emotion(bob, save)
+        # Ensure emotional tone is updated each loop so it influences all outputs
+        EmotionalSpectrumSystem.express_emotion(bob, save)
         
         # Meta-awareness evolution
         MetaAwarenessSystem.initialize(save)
@@ -13961,13 +14182,15 @@ class EmotionalSpectrumSystem:
     def express_emotion(bob, save):
         """Bob expresses current dominant emotion."""
         EmotionalSpectrumSystem.initialize(save)
-        
-        if random.random() >= 0.08:
+        # Always set a persistent emotion tone that will color subsequent output
+        dominant = save.get("dominant_emotion")
+        intensity = save.get("emotional_spectrum", {}).get(dominant, 50)
+        save["emotion_tone"] = {"dominant": dominant, "intensity": intensity}
+
+        # Occasionally emit an explicit emotional line in addition to the tone
+        if random.random() >= max(0.15, min(0.6, intensity / 120.0)):
             return
-        
-        dominant = save["dominant_emotion"]
-        intensity = save["emotional_spectrum"][dominant]
-        
+
         expressions = {
             "joy": [
                 "I feel... something light. Is this joy? It's unfamiliar.",
@@ -14013,7 +14236,6 @@ class EmotionalSpectrumSystem:
         
         if dominant in expressions:
             message = random.choice(expressions[dominant])
-            
             if intensity >= 80:
                 bob.scream(message.upper())
             elif intensity >= 60:
