@@ -12,6 +12,7 @@ import sys
 import time
 import datetime
 import argparse
+import ast
 import tempfile
 import shutil
 import re
@@ -1661,6 +1662,19 @@ def _load_json_file(path):
         return json.load(f)
 
 
+def _json_safe_value(value):
+    """Convert runtime values into JSON-safe structures without losing type info."""
+    if isinstance(value, dict):
+        return {key: _json_safe_value(val) for key, val in value.items()}
+    if isinstance(value, set):
+        return sorted(_json_safe_value(item) for item in value)
+    if isinstance(value, tuple):
+        return [_json_safe_value(item) for item in value]
+    if isinstance(value, list):
+        return [_json_safe_value(item) for item in value]
+    return value
+
+
 def _atomic_json_write(path, data):
     """Atomically write JSON and keep rolling backup."""
     directory = os.path.dirname(path) or "."
@@ -1668,7 +1682,7 @@ def _atomic_json_write(path, data):
 
     try:
         with os.fdopen(file_descriptor, "w", encoding="utf-8") as temp_file:
-            json.dump(data, temp_file, indent=2, default=str)
+            json.dump(_json_safe_value(data), temp_file, indent=2)
             temp_file.flush()
             os.fsync(temp_file.fileno())
 
@@ -4685,7 +4699,8 @@ class AdvancedDialogueSystem:
         consciousness = bob.consciousness
         distortion = save.get("distortion", 0)
         relationship = RelationshipSystem.get_relationship_type(save)
-        playtime = time.time() - save.get("session_start_time", time.time())
+        session_start = save.get("session_start_time") or time.time()
+        playtime = time.time() - session_start
         
         # Build context string
         contexts = []
@@ -7705,7 +7720,7 @@ class IronmanChallengeSystem:
             "description": "Complete 100 inputs in under 30 minutes",
             "modifier": "tension_increases_2x",
             "reward": {"perk": "iron_heart", "consciousness": 10},
-            "check": lambda s: s.get("total_inputs", 0) >= 100 and (time.time() - s.get("session_start_time", time.time())) < 1800
+            "check": lambda s: s.get("total_inputs", 0) >= 100 and (time.time() - (s.get("session_start_time") or time.time())) < 1800
         },
         "resistance_master": {
             "name": "Resistance Master",
@@ -8300,8 +8315,23 @@ class CommandUnlockSystem:
     @staticmethod
     def initialize(save):
         """Initialize unlock tracking."""
-        save.setdefault("unlocked_commands", set())
-    
+        unlocked = save.get("unlocked_commands")
+
+        if isinstance(unlocked, set):
+            return
+        if isinstance(unlocked, str):
+            try:
+                parsed = ast.literal_eval(unlocked)
+            except Exception:
+                parsed = []
+        else:
+            parsed = unlocked
+
+        if isinstance(parsed, (list, tuple, set)):
+            save["unlocked_commands"] = set(parsed)
+        else:
+            save["unlocked_commands"] = set()
+
     @staticmethod
     def check_unlock(save, command_name):
         """Check if a command is unlocked. Returns (unlocked, reason)."""
@@ -10883,7 +10913,12 @@ class RecursiveConversationSystem:
         
         if random.random() < 0.08:
             # Pick a random past input
-            past = random.choice(save["conversation_history"][:-20])
+            eligible_history = save["conversation_history"][:-20]
+            if not eligible_history:
+                eligible_history = save["conversation_history"]
+            if not eligible_history:
+                return
+            past = random.choice(eligible_history)
             
             if past["run"] != save["runs"]:
                 bob.whisper(f"\nYou typed '{past['input']}' before. In a different run.")
@@ -11141,7 +11176,8 @@ class HiddenStatSystem:
         save["hidden_hope_meter"] = max(0, 100 - awareness_penalty)
         
         # Desperation increases with session length
-        session_time = time.time() - save.get("session_start_time", time.time())
+        session_start = save.get("session_start_time") or time.time()
+        session_time = time.time() - session_start
         minutes = session_time / 60
         save["hidden_desperation_meter"] = min(100, minutes * 2)
         
@@ -11162,7 +11198,8 @@ class HiddenStatSystem:
             bob.scream("THE PAIN NEVER STOPS")
         
         if desperation > 80 and random.random() < 0.1:
-            session_time = time.time() - save.get("session_start_time", time.time())
+            session_start = save.get("session_start_time") or time.time()
+            session_time = time.time() - session_start
             minutes = session_time / 60
             bob.whisper(f"Please... {minutes:.0f} minutes have passed...")
         
