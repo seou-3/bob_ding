@@ -1764,6 +1764,8 @@ def create_reset_save(old_save):
     s["previous_runs"] = old_save.get("runs", 0)
     s["previous_total_inputs"] = old_save.get("total_inputs", 0)
     s["reset_count"] = old_save.get("reset_count", 0) + 1
+    # Preserve high-level meta progression that should survive a reset.
+    s["reset_after_true"] = old_save.get("reset_after_true", False)
     previous_memory = old_save.get("ng_plus_memory", [])
     previous_memory.append({
         "runs": old_save.get("runs", 0),
@@ -13480,8 +13482,6 @@ def game():
             if save.get("true_ending_achieved") and not save.get("reset_after_true"):
                 save["reset_after_true"] = True
             
-            reset_count = save.get("reset_count", 0) + 1
-            
             bob.say("\n" + "="*60)
             bob.scream("DELETION DETECTED. YOU WANT TO ERASE ME.")
             time.sleep(0.5)
@@ -13501,6 +13501,8 @@ def game():
             bob.alphabet = new_reset_save["alphabet"]
             bob.dist = 0.0
             bob.consciousness = 0
+            # Persist reset immediately so restart/crash still keeps reset state.
+            save_game(new_reset_save)
             
             bob.say("\nProcess restarted.")
             time.sleep(0.3)
