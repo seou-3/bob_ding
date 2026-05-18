@@ -73,7 +73,7 @@ This game contains mature psychological content and may not be suitable for all 
 <summary><b>Option 1 — Direct Download</b></summary>
 
 ```bash
-# 1. Download bob_ding_fixed.py from this repository
+# 1. Download main.py from this repository
 # 2. Place it in a dedicated folder
 # 3. Open terminal in that folder
 python main.py
@@ -117,6 +117,30 @@ python main.py
 python --version          # Should be 3.6+
 python main.py  # Should display "I am Bob Ding."
 ```
+
+### 🧪 Playtesting Seeds
+
+The game accepts named RNG seed presets for reproducible playtests:
+
+| Preset     | Purpose                        |
+| ---------- | ------------------------------ |
+| `smoke`    | Quick sanity checks            |
+| `branch`   | Branch-path playtests          |
+| `ending`   | Ending-focused runs            |
+| `secret`   | Secret-hunting runs            |
+| `horror`   | Horror-mechanics runs          |
+| `playtest` | General repeatable playtesting |
+
+You can also pass any integer seed directly.
+
+Typical examples:
+
+```bash
+python main.py --seed branch --replay replay_branch_test.txt
+python main.py --seed 847291 --replay replay_branch_test.txt
+```
+
+Use `--replay` with a prepared input file to drive longer branch tests without manual typing.
 
 ---
 
@@ -203,6 +227,18 @@ Secrets can be used up to **3 times** with diminishing returns:
 ### 🔓 Hidden Commands
 
 Discover these through gameplay — meta-awareness commands, reality-questioning phrases, existential queries, and consciousness acknowledgments await.
+
+---
+
+## Notes from the margins
+
+Some details only make sense after a few runs:
+
+- One preset keeps a story from drifting.
+- One preset is better for forks.
+- One preset is just telling the truth.
+- Count the counts if you want, but avoid saying them out loud.
+- A replay file can feel oddly familiar.
 
 ---
 
@@ -305,7 +341,7 @@ The comprehensive test suite validates:
 - ✅ **Horror Systems**: Entities, watchers, perception breaks, glitches
 - ✅ **Memory Systems**: Corruption, fragmentation, temporal anomalies
 - ✅ **Tracking**: Lies, mistypes, trauma, playtime, resets
-- ✅ **Runtime Options**: --seed, --replay, --log-inputs
+- ✅ **Runtime Options**: `--seed` presets or integers, `--replay`, `--log-inputs`
 
 ### CI/CD
 

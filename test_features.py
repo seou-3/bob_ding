@@ -572,6 +572,11 @@ def test_runtime_options():
     # Seed argument
     args = main.parse_runtime_args(['--seed', '42'])
     t.test(args.seed == 42, "Can parse --seed argument")
+
+    # Seed preset argument
+    args = main.parse_runtime_args(['--seed', 'branch'])
+    t.test(args.seed == 'branch', "Can parse named seed preset")
+    t.test(main.resolve_runtime_seed(args.seed) == 31337, "Resolves seed preset to deterministic value")
     
     # Replay argument
     args = main.parse_runtime_args(['--replay', 'test.txt'])

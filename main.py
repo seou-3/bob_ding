@@ -61,12 +61,56 @@ FULL_ALPHABET = VOWELS + CONSONANTS
 
 _INPUT_REPLAY_QUEUE = []
 _INPUT_LOG_HANDLE = None
+RUNTIME_SEED_PRESETS = {
+    "smoke": 42,
+    "branch": 31337,
+    "ending": 9001,
+    "secret": 155155,
+    "horror": 666,
+    "playtest": 240518,
+}
+
+
+def _parse_seed_argument(raw):
+    """Accept an integer seed or a named playtest preset."""
+    if raw is None:
+        return None
+
+    try:
+        return int(raw)
+    except (TypeError, ValueError):
+        normalized = str(raw).strip().lower()
+        if normalized in RUNTIME_SEED_PRESETS:
+            return normalized
+        raise argparse.ArgumentTypeError(
+            f"Unknown seed preset '{raw}'. Use an integer or one of: {', '.join(sorted(RUNTIME_SEED_PRESETS))}"
+        )
+
+
+def resolve_runtime_seed(seed_value):
+    """Return the numeric seed used for a run, resolving presets when needed."""
+    if seed_value is None:
+        return None
+
+    if isinstance(seed_value, int):
+        return seed_value
+
+    normalized = str(seed_value).strip().lower()
+    if normalized in RUNTIME_SEED_PRESETS:
+        return RUNTIME_SEED_PRESETS[normalized]
+
+    return int(seed_value)
 
 
 def parse_runtime_args(argv=None):
     """Parse optional runtime flags."""
     parser = argparse.ArgumentParser(add_help=True)
-    parser.add_argument("--seed", type=int, default=None, help="Seed RNG for reproducible runs")
+    parser.add_argument(
+        "--seed",
+        type=_parse_seed_argument,
+        default=None,
+        help="Seed RNG for reproducible runs (int or preset: smoke, branch, ending, secret, horror, playtest)",
+    )
     parser.add_argument("--replay", type=str, default=None, help="Replay inputs from a text file")
     parser.add_argument("--log-inputs", type=str, default=None, help="Write all inputs to a log file")
     return parser.parse_args(argv)
@@ -78,8 +122,14 @@ def configure_runtime(args):
 
     _INPUT_REPLAY_QUEUE = []
 
-    if args.seed is not None:
-        random.seed(args.seed)
+    runtime_seed = resolve_runtime_seed(getattr(args, "seed", None))
+    if runtime_seed is not None:
+        random.seed(runtime_seed)
+        seed_label = getattr(args, "seed", None)
+        if isinstance(seed_label, str) and seed_label.strip().lower() in RUNTIME_SEED_PRESETS:
+            print(f"[Runtime] RNG seed preset '{seed_label}' resolved to {runtime_seed}.")
+        else:
+            print(f"[Runtime] RNG seed set to {runtime_seed}.")
 
     if args.replay:
         try:
